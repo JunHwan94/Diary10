@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "740476548054",
+    "firebase_url": "https://diary-10-945ed.firebaseio.com",
+    "project_id": "diary-10-945ed",
+    "storage_bucket": "diary-10-945ed.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:740476548054:android:f43c9b9d620a21d7",
+        "android_client_info": {
+          "package_name": "com.polarstation.diary10"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "740476548054-fl119p0k0lbpd05mr0ibpdui9dm5qfkm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClFbBAfLLFCxS3bYU967AGUbojoT-2DmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "740476548054-fl119p0k0lbpd05mr0ibpdui9dm5qfkm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">Diary10</string>
+    <string name="app_name">Diary 10</string>
+    <string name="splash_text" translatable="false">D i a r y\n1 0</string>
+    <string name="log_in">로그인</string>
+    <string name="sign_up">회원가입</string>
+    <string name="auth_failed">인증 실패</string>
+    <string name="auth_success">로그인 성공</string>
+    <!--<string name="default_web_client_id">AIzaSyAg9aTptOvVPNSsKZTF8xMYBQbLp69WzhU</string>-->
 </resources>
