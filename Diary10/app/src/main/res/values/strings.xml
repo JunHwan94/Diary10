@@ -4,6 +4,17 @@
     <string name="log_in">로그인</string>
     <string name="sign_up">회원가입</string>
     <string name="auth_failed">인증 실패</string>
-    <string name="auth_success">로그인 성공</string>
-    <!--<string name="default_web_client_id">AIzaSyAg9aTptOvVPNSsKZTF8xMYBQbLp69WzhU</string>-->
+    <string name="auth_success">로그인 했어요 !</string>
+    <string name="log_in_please">로그인 하세요</string>
+
+    <!--페이스북 로그인용-->
+    <string name="facebook_app_id">2374927029431149</string>
+    <string name="fb_login_protocol_scheme">fb2374927029431149</string>
+
+    <!--FirebaseDatabase-->
+    <string name="fdb_users">users</string>
+    <string name="my_diaries">내 일기장</string>
+    <string name="please_wait">데이터를 불러오는 중입니다..</string>
+
+    <!--<string name="default_web_client_id">740476548054-ousetdguv1rljkhoaeafh4fjcrqmt8e3.apps.googleusercontent.com</string>-->
 </resources>

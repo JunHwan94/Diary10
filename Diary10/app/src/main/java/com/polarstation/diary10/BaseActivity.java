@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 public class BaseActivity extends AppCompatActivity {
-    private Typeface typeface = null;
+    private static Typeface typeface = null;
 
     @Override
     public void setContentView(int layoutResID) {
@@ -19,7 +19,7 @@ public class BaseActivity extends AppCompatActivity {
         setGlobalFont(getWindow().getDecorView());
     }
 
-    public void setGlobalFont(View view){
+    public static void setGlobalFont(View view){
         if(view != null){
             if(view instanceof ViewGroup){
                 ViewGroup vg = (ViewGroup)view;

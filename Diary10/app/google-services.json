@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "740476548054-ousetdguv1rljkhoaeafh4fjcrqmt8e3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.polarstation.diary10",
+            "certificate_hash": "3e106340932734f1e9eaeb1975c4381bc1a7e7a0"
+          }
+        },
+        {
           "client_id": "740476548054-fl119p0k0lbpd05mr0ibpdui9dm5qfkm.apps.googleusercontent.com",
           "client_type": 3
         }
