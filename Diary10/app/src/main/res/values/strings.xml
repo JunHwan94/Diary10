@@ -1,20 +1,42 @@
 <resources>
     <string name="app_name">Diary 10</string>
-    <string name="splash_text" translatable="false">D i a r y\n1 0</string>
+    <string name="splash_text">D i a r y\n1 0</string>
     <string name="log_in">로그인</string>
     <string name="sign_up">회원가입</string>
+    <string name="log_in_please">로그인 하세요</string>
+    <string name="secret_diary">비밀 일기</string>
+    <string name="select_cover">표지 사진을 선택하세요</string>
+    <string name="select_image">오늘의 사진을 선택하세요</string>
+    <string name="cancel">취소</string>
+    <string name="save">저장</string>
+
+    <!--Toast-->
     <string name="auth_failed">인증 실패</string>
     <string name="auth_success">로그인 했어요 !</string>
-    <string name="log_in_please">로그인 하세요</string>
+
+    <!--hint-->
+    <string name="write_title">일기장 제목을 입력하세요</string>
+    <string name="write_content">오늘의 일기..</string>
 
     <!--페이스북 로그인용-->
+    <string name="email">email</string>
     <string name="facebook_app_id">2374927029431149</string>
     <string name="fb_login_protocol_scheme">fb2374927029431149</string>
 
-    <!--FirebaseDatabase-->
+    <!--Firebase-->
+    <string name="fdb_diaries">diaries</string>
     <string name="fdb_users">users</string>
+    <string name="fdb_uid">uid</string>
+    <string name="fdb_profile_image_url">profileImageUrl</string>
+    <string name="fdb_pages">pages</string>
+    <string name="fdb_title">title</string>
+    <string name="fstr_user_images">userImages</string>
+    <string name="fstr_diary_images">diaryImages</string>
+
     <string name="my_diaries">내 일기장</string>
     <string name="please_wait">데이터를 불러오는 중입니다..</string>
+    <string name="uploading">업로드 중입니다..</string>
+    <string name="uploaded">업로드 완료</string>
 
     <!--<string name="default_web_client_id">740476548054-ousetdguv1rljkhoaeafh4fjcrqmt8e3.apps.googleusercontent.com</string>-->
 </resources>

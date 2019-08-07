@@ -42,7 +42,6 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private FirebaseDatabase dbInstance;
 
     private CallbackManager callbackManager;
-//    private boolean isInDB = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,10 +65,46 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
         };
 
         binding.loginActivityButtonGoogleLogin.setOnClickListener(this);
+        setFacebookLogIn();
+    }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == SIGN_IN_REQUEST_CODE){
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                if(account != null) firebaseAuthWithGoogle(account);
+            }catch(ApiException e){
+                Log.w("LoginActivity", e.getStatusCode()+"");
+            }
+        }
+    }
+
+    private void googleSignIn(){
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build();
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        Intent intent = googleSignInClient.getSignInIntent();
+        startActivityForResult(intent, SIGN_IN_REQUEST_CODE);
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount account){
+        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+        String userName = account.getDisplayName();
+        String profileImageUrl = String.valueOf(account.getPhotoUrl());
+        processCredential(credential, userName, profileImageUrl);
+    }
+
+    private void setFacebookLogIn(){
         // 페이스북 로그인
         callbackManager = CallbackManager.Factory.create();
-        binding.loginActivityButtonFacebookLogin.setReadPermissions("email");
+        binding.loginActivityButtonFacebookLogin.setReadPermissions(getString(R.string.email));
         binding.loginActivityButtonFacebookLogin.setLoginText(getString(R.string.log_in));
         binding.loginActivityButtonFacebookLogin.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -88,39 +123,6 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                 Log.w("LoginActivity", error.toString());
             }
         });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        callbackManager.onActivityResult(requestCode, resultCode, data);
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == SIGN_IN_REQUEST_CODE){
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-                if(account != null) firebaseAuthWithGoogle(account);
-            }catch(ApiException e){
-                Log.w("LoginActivity", e.getStatusCode()+"");
-            }
-        }
-    }
-
-    public void googleSignIn(){
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build();
-        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        Intent intent = googleSignInClient.getSignInIntent();
-        startActivityForResult(intent, SIGN_IN_REQUEST_CODE);
-    }
-
-    private void firebaseAuthWithGoogle(GoogleSignInAccount account){
-        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
-        String userName = account.getDisplayName();
-        String profileImageUrl = String.valueOf(account.getPhotoUrl());
-        processCredential(credential, userName, profileImageUrl);
     }
 
     private void handleFacebookAccessToken(AccessToken token){
