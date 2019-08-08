@@ -20,6 +20,7 @@ public class SplashActivity extends BaseActivity {
 
         handler.postDelayed(()->{
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
 
             finish();

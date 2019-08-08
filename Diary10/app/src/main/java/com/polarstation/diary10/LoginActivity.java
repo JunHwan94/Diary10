@@ -2,8 +2,10 @@ package com.polarstation.diary10;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,18 +32,24 @@ import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.databinding.ActivityLoginBinding;
 import com.polarstation.diary10.model.UserModel;
 
 public class LoginActivity extends BaseActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
     private ActivityLoginBinding binding;
     private FirebaseAuth authInstance;
-    private int SIGN_IN_REQUEST_CODE = 100;
     private FirebaseAuth.AuthStateListener authStateListener;
     private FirebaseDatabase dbInstance;
+    private String uid;
+    private boolean isInFdb;
 
     private CallbackManager callbackManager;
+
+    private int SIGN_IN_REQUEST_CODE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +64,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             if (user != null) {
                 //로그인
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 finish();
             } else {
@@ -64,8 +73,11 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             }
         };
 
-        binding.loginActivityButtonGoogleLogin.setOnClickListener(this);
+        binding.loginActivityGoogleLoginButton.setOnClickListener(this);
         setFacebookLogIn();
+
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},  1);
     }
 
     @Override
@@ -104,9 +116,9 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private void setFacebookLogIn(){
         // 페이스북 로그인
         callbackManager = CallbackManager.Factory.create();
-        binding.loginActivityButtonFacebookLogin.setReadPermissions(getString(R.string.email));
-        binding.loginActivityButtonFacebookLogin.setLoginText(getString(R.string.log_in));
-        binding.loginActivityButtonFacebookLogin.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+        binding.loginActivityFacebookLoginButton.setReadPermissions(getString(R.string.email));
+        binding.loginActivityFacebookLoginButton.setLoginText(getString(R.string.log_in));
+        binding.loginActivityFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 handleFacebookAccessToken(loginResult.getAccessToken());
@@ -135,17 +147,33 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private void processCredential(AuthCredential credential, String userName, String profileImageUrl){
         authInstance.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
-                    if(task.isSuccessful()){
+                    if (task.isSuccessful()) {
                         Toast.makeText(this, R.string.auth_success, Toast.LENGTH_SHORT).show();
-                        addUserToFDB(userName, profileImageUrl);
-                    }else{
+                        checkUid(userName, profileImageUrl);
+                    } else {
                         Toast.makeText(this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
+    private void checkUid(String userName, String profileImageUrl){
+        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        dbInstance.getReference().child(getString(R.string.fdb_users)).orderByChild(uid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if(dataSnapshot.getChildrenCount() == 0)
+                            addUserToFDB(userName, profileImageUrl);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+        });
+    }
+
     private void addUserToFDB(String userName, String profileImageUrl){
-        String uid = authInstance.getCurrentUser().getUid();
         UserModel userModel = new UserModel.Builder()
                 .setUserName(userName)
                 .setProfileImageUrl(profileImageUrl)
@@ -161,7 +189,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     @Override
     public void onClick(View v) {
         switch(v.getId()){
-            case R.id.loginActivity_button_googleLogin:
+            case R.id.loginActivity_googleLoginButton:
                 googleSignIn();
         }
     }

@@ -13,10 +13,14 @@
     <!--Toast-->
     <string name="auth_failed">인증 실패</string>
     <string name="auth_success">로그인 했어요 !</string>
+    <string name="write_content_toast">글을 입력하세요</string>
+    <string name="write_name">이름을 입력하세요</string>
 
     <!--hint-->
     <string name="write_title">일기장 제목을 입력하세요</string>
     <string name="write_content">오늘의 일기..</string>
+    <string name="name">이름</string>
+    <string name="comment">소개 글</string>
 
     <!--페이스북 로그인용-->
     <string name="email">email</string>
@@ -30,11 +34,13 @@
     <string name="fdb_profile_image_url">profileImageUrl</string>
     <string name="fdb_pages">pages</string>
     <string name="fdb_title">title</string>
+    <string name="fdb_user_name">userName</string>
+    <string name="fdb_comment">comment</string>
     <string name="fstr_user_images">userImages</string>
     <string name="fstr_diary_images">diaryImages</string>
 
     <string name="my_diaries">내 일기장</string>
-    <string name="please_wait">데이터를 불러오는 중입니다..</string>
+    <string name="loading_data">데이터를 불러오는 중입니다..</string>
     <string name="uploading">업로드 중입니다..</string>
     <string name="uploaded">업로드 완료</string>
 

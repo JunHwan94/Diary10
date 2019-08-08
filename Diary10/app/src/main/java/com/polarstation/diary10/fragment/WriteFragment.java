@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +36,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import gun0912.tedkeyboardobserver.TedKeyboardObserver;
 
 import static com.polarstation.diary10.MainActivity.LIST_KEY;
 import static com.polarstation.diary10.MainActivity.NEW_DIARY_TYPE;
@@ -42,18 +44,17 @@ import static com.polarstation.diary10.MainActivity.NEW_PAGE_TYPE;
 import static com.polarstation.diary10.MainActivity.TYPE_KEY;
 import static com.polarstation.diary10.Util.DialogUtils.showProgressDialog;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
-
+// 일기장 수정, 일기 글 수정하려면 액티비티로 바꿔야 편할듯
 public class WriteFragment extends Fragment implements View.OnClickListener{
     private FragmentWriteBinding binding;
-    private FirebaseStorage strInstance = FirebaseStorage.getInstance();
-    private FirebaseDatabase dbInstance = FirebaseDatabase.getInstance();
+    private FirebaseStorage strInstance;
+    private FirebaseDatabase dbInstance;
     private String imageUrl;
     private Uri imageUri;
     private String uid;
     private ProgressDialog progressDialog;
     private Bundle bundle;
     private FragmentCallBack callback;
-
 
     public static final int LIST_TYPE = 0;
     public static final int CREATE_TYPE = 1;
@@ -65,9 +66,13 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_write, container,false);
         BaseActivity.setGlobalFont(binding.getRoot());
+        strInstance = FirebaseStorage.getInstance();
+        dbInstance = FirebaseDatabase.getInstance();
 
         bundle = getArguments();
-        int type = bundle.getInt(TYPE_KEY, 0);
+        int type = NEW_PAGE_TYPE;
+        if(bundle != null)
+            type = bundle.getInt(TYPE_KEY, 0);
         if(type == NEW_PAGE_TYPE){
             //새 일기장 만들건지 다이얼로그 보여주기
             // 확인 -> type = NEW_DIARY_TYPE
@@ -76,12 +81,18 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         setUI(type);
 
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
         progressDialog = new ProgressDialog(getContext());
 
         binding.writeFragmentChildConstraintLayout.setOnClickListener(this);
         setSaveButtonListener(type);
         binding.writeFragmentCancelButton.setOnClickListener(this);
+
+        // 키보드 올라오거나 내려갈때 이벤트
+        new TedKeyboardObserver(getActivity()).listen(isShow-> {
+            if(!isShow){
+                binding.writeFragmentEditText.clearFocus();
+            }
+        });
 
         return binding.getRoot();
     }
@@ -89,14 +100,14 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private void setUI(int type){
         switch(type){
             case NEW_DIARY_TYPE:
+                binding.writeFragmentSpinner.setVisibility(View.INVISIBLE);
+                binding.writeFragmentSwitch.setVisibility(View.VISIBLE);
+                binding.writeFragmentGuideTextView.setText(R.string.select_cover);
+                binding.writeFragmentEditText.setHint(R.string.write_title);
                 break;
             case NEW_PAGE_TYPE:
                 List<String> diaryTitleList = bundle.getStringArrayList(LIST_KEY);
                 setSpinner(diaryTitleList);
-                binding.writeFragmentSpinner.setVisibility(View.VISIBLE);
-                binding.writeFragmentSwitch.setVisibility(View.INVISIBLE);
-                binding.writeFragmentGuideTextView.setText(R.string.select_image);
-                binding.writeFragmentEditText.setHint(R.string.write_content);
                 break;
         }
     }
@@ -111,9 +122,11 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
             String text = String.valueOf(binding.writeFragmentEditText.getText());
             switch(type){
                 case NEW_DIARY_TYPE:
-                    if(binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE)
+                    if(binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE) {
                         Toast.makeText(getContext(), getString(R.string.select_cover), Toast.LENGTH_SHORT).show();
-                    else {
+                    }else if(String.valueOf(binding.writeFragmentEditText.getText()).equals("")){
+                        Toast.makeText(getContext(), getString(R.string.write_title), Toast.LENGTH_SHORT).show();
+                    }else {
                         showProgressDialog(progressDialog, getString(R.string.uploading));
 
                         String title = text;
@@ -145,47 +158,49 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 case NEW_PAGE_TYPE:
                     String content = text;
                     String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
-                    // uid와 제목이 같은 일기장에서 날짜 불러와서 그 날짜에 해당하는 storage의 폴더 안에 이미지 저장하고 데이터 삽입
-                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    DiaryModel diaryModel = null;
-                                    for (DataSnapshot item : dataSnapshot.getChildren()) {
-                                        diaryModel = item.getValue(DiaryModel.class);
-                                        if (diaryModel.getTitle().equals(titleOfDiary))
-                                            break;
+                    if(content.equals("")) {
+                        Toast.makeText(getContext(), getString(R.string.write_content_toast), Toast.LENGTH_SHORT).show();
+                    }else{
+                        showProgressDialog(progressDialog, getString(R.string.uploading));
+                        // uid와 제목이 같은 일기장에서 날짜 불러와서 그 날짜에 해당하는 storage의 폴더 안에 이미지 저장하고 데이터 삽입
+                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        DiaryModel diaryModel = null;
+                                        for (DataSnapshot item : dataSnapshot.getChildren()) {
+                                            diaryModel = item.getValue(DiaryModel.class);
+                                            if (diaryModel.getTitle().equals(titleOfDiary))
+                                                break;
+                                        }
+                                        String diaryCreateTime = String.valueOf(diaryModel.getCreateTime());
+                                        String pageCreateTime = String.valueOf(Calendar.getInstance().getTimeInMillis());
+                                        String diaryKey = dataSnapshot.getKey();
+                                        Object timeStamp = ServerValue.TIMESTAMP;
+
+                                        if (binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE) {
+                                            pushPage(content, timeStamp, diaryKey, "");
+                                        } else {
+                                            strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).putFile(imageUri)
+                                                    .addOnCompleteListener(task -> {
+                                                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
+                                                                .addOnSuccessListener(uri -> {
+                                                                    String imageUrl = String.valueOf(uri);
+
+                                                                    pushPage(content, timeStamp, diaryKey, imageUrl);
+                                                                });
+                                                    });
+                                        }
+                                        binding.writeFragmentEditText.setText("");
+
                                     }
-                                    String diaryCreateTime = String.valueOf(diaryModel.getCreateTime());
-                                    String pageCreateTime = String.valueOf(Calendar.getInstance().getTimeInMillis());
-                                    String diaryKey = dataSnapshot.getKey();
-                                    Object timeStamp = ServerValue.TIMESTAMP;
 
-                                    showProgressDialog(progressDialog, getString(R.string.uploading));
-                                    if(binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE){
-                                        pushPage(content, timeStamp,diaryKey, "");
-                                    }else {
-                                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).putFile(imageUri)
-                                                .addOnCompleteListener(task -> {
-                                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
-                                                            .addOnSuccessListener(uri -> {
-                                                                String imageUrl = String.valueOf(uri);
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                                                                pushPage(content, timeStamp, diaryKey, imageUrl);
-
-                                                                Toast.makeText(getContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-                                                                // 저장 후 내 페이지로 프래그먼트 변경
-                                                                callback.replaceFragment(ACCOUNT_TYPE);
-                                                            });
-                                                });
                                     }
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
+                                });
+                    }
                     break;
             }
         });
@@ -199,14 +214,21 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         .setImageUrl(imageUrl)
                         .build();
 
-        dbInstance.getReference().child(diaryKey).child(getString(R.string.fdb_pages)).push().setValue(pageModel)
-                .addOnSuccessListener( aVoid -> progressDialog.cancel());
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).push().setValue(pageModel)
+                .addOnSuccessListener( aVoid -> {
+                    progressDialog.cancel();
+
+                    Toast.makeText(getContext().getApplicationContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
+                    // 저장 후 내 페이지로 프래그먼트 변경
+                    callback.replaceFragment(ACCOUNT_TYPE);
+                });
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == PICK_FROM_ALBUM_CODE && resultCode == Activity.RESULT_OK){
             imageUri = data.getData();
+
             binding.writeFragmentGuideImageView.setVisibility(View.INVISIBLE);
             binding.writeFragmentGuideTextView.setVisibility(View.INVISIBLE);
             binding.writeFragmentCoverImageView.setVisibility(View.VISIBLE);
@@ -226,10 +248,11 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
                 startActivityForResult(intent, PICK_FROM_ALBUM_CODE);
                 break;
-            case R.id.cancel_button:
+            case R.id.writeFragment_cancelButton:
                 binding.writeFragmentCoverImageView.setVisibility(View.INVISIBLE);
                 binding.writeFragmentSwitch.setChecked(false);
                 binding.writeFragmentEditText.setText("");
+                callback.replaceFragment(LIST_TYPE);
                 break;
         }
     }

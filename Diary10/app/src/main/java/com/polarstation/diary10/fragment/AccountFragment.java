@@ -4,31 +4,22 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.text.SpannableString;
-import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
 import com.polarstation.diary10.BaseActivity;
+import com.polarstation.diary10.EditAccountActivity;
+import com.polarstation.diary10.PhotoViewActivity;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentAccountBinding;
 import com.polarstation.diary10.model.UserModel;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,29 +27,34 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import static com.polarstation.diary10.EditAccountActivity.COMMENT_KEY;
+import static com.polarstation.diary10.EditAccountActivity.NAME_KEY;
+import static com.polarstation.diary10.EditAccountActivity.URI_KEY;
+import static com.polarstation.diary10.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.Util.DialogUtils.showProgressDialog;
 
-public class AccountFragment extends Fragment {
-    public static final int PICK_FROM_ALBUM_CODE = 100;
-    private FirebaseDatabase dbInstance = FirebaseDatabase.getInstance();
-    private FirebaseStorage strInstance = FirebaseStorage.getInstance();
+public class AccountFragment extends Fragment implements View.OnClickListener{
+    private FirebaseDatabase dbInstance;
     private FragmentAccountBinding binding;
-    private String uid;
+    private String imageUrl = "";
     private ProgressDialog progressDialog;
+
+    public static final int PICK_FROM_ALBUM_CODE = 100;
+    public static final int EDIT_COMPLETE_CODE = 101;
+    public static final String URL_KEY = "urlKey";
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_account, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
+        dbInstance = FirebaseDatabase.getInstance();
 
-        setUserInfo();
+        Bundle bundle = getArguments();
+        setUserInfo(bundle);
 
-        binding.accountFragmentProfileImageView.setOnClickListener(v->{
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
-            startActivityForResult(intent, PICK_FROM_ALBUM_CODE);
-        });
+        binding.accountFragmentProfileImageView.setOnClickListener(this);
+        binding.accountFragmentEditButton.setOnClickListener(this);
 
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
         binding.accountFragmentRecyclerView.setLayoutManager(layoutManager);
@@ -66,39 +62,29 @@ public class AccountFragment extends Fragment {
         return binding.getRoot();
     }
 
-    private void setUserInfo(){
-        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                UserModel userModel = dataSnapshot.getValue(UserModel.class);
+    private void setUserInfo(Bundle bundle){
+//        번들로 받기
+        UserModel userModel = bundle.getParcelable(USER_MODEL_KEY);
 
-                String imageUrl = userModel.getProfileImageUrl();
-                Glide.with(getContext())
-                        .load(imageUrl)
-                        .apply(new RequestOptions().circleCrop())
-                        .into(binding.accountFragmentProfileImageView);
+        imageUrl = userModel.getProfileImageUrl();
+        Glide.with(getContext())
+                .load(imageUrl)
+                .apply(new RequestOptions().circleCrop())
+                .into(binding.accountFragmentProfileImageView);
 
-                String userName = userModel.getUserName();
-                binding.accountFragmentNameTextView.setText(userName);
-                String comment = userModel.getComment();
-                binding.accountFragmentCommentTextView.setText(comment);
+        String userName = userModel.getUserName();
+        binding.accountFragmentNameTextView.setText(userName);
+        String comment = userModel.getComment();
+        binding.accountFragmentCommentTextView.setText(comment);
 
-                progressDialog.cancel();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+        progressDialog.cancel();
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         progressDialog = new ProgressDialog(context);
-        showProgressDialog(progressDialog, getString(R.string.please_wait));
+        showProgressDialog(progressDialog, getString(R.string.loading_data));
     }
 
     @Override
@@ -108,24 +94,45 @@ public class AccountFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == PICK_FROM_ALBUM_CODE && resultCode == Activity.RESULT_OK){
-            Uri imageUri = data.getData();
-            Glide.with(getContext())
-                    .load(imageUri)
-                    .apply(new RequestOptions().circleCrop())
-                    .into(binding.accountFragmentProfileImageView);
+        if(requestCode == EDIT_COMPLETE_CODE && resultCode == Activity.RESULT_OK){
+            String name = data.getStringExtra(NAME_KEY);
+            String comment = data.getStringExtra(COMMENT_KEY);
+            String imageUri = data.getStringExtra(URI_KEY);
 
-            strInstance.getReference().child(getString(R.string.fstr_user_images)).child(uid).putFile(imageUri)
-            .addOnCompleteListener(task -> {
-                strInstance.getReference().child(getString(R.string.fstr_user_images)).child(uid).getDownloadUrl().addOnSuccessListener(uri -> {
-                    String imageUrl = String.valueOf(uri);
+            if(!imageUri.equals("")) {
+//                Toast.makeText(getContext(), String.valueOf(imageUri), Toast.LENGTH_SHORT).show();
+                Glide.with(this.getContext())
+                        .load(imageUri)
+                        .apply(new RequestOptions().circleCrop())
+                        .into(binding.accountFragmentProfileImageView);
+                imageUrl = imageUri;
+            }
+            binding.accountFragmentNameTextView.setText(name);
+            binding.accountFragmentCommentTextView.setText(comment);
+        }
+    }
 
-                    Map<String, Object> stringObjectMap = new HashMap<>();
-                    stringObjectMap.put(getString(R.string.fdb_profile_image_url), imageUrl);
-                    dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).updateChildren(stringObjectMap);
-                });
+    @Override
+    public void onClick(View view) {
+        Intent intent;
 
-            });
+        switch(view.getId()){
+            case R.id.accountFragment_profileImageView:
+                intent = new Intent(getContext(), PhotoViewActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra(URL_KEY, imageUrl);
+                startActivity(intent);
+                break;
+            case R.id.accountFragment_editButton:
+                String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
+                String comment = String.valueOf(binding.accountFragmentCommentTextView.getText());
+                intent = new Intent(getContext(), EditAccountActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra(URL_KEY, imageUrl);
+                intent.putExtra(NAME_KEY, userName);
+                intent.putExtra(COMMENT_KEY, comment);
+                startActivityForResult(intent, EDIT_COMPLETE_CODE);
+                break;
         }
     }
 }
