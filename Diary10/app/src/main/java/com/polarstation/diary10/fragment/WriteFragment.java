@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +41,7 @@ import static com.polarstation.diary10.MainActivity.LIST_KEY;
 import static com.polarstation.diary10.MainActivity.NEW_DIARY_TYPE;
 import static com.polarstation.diary10.MainActivity.NEW_PAGE_TYPE;
 import static com.polarstation.diary10.MainActivity.TYPE_KEY;
-import static com.polarstation.diary10.Util.DialogUtils.showProgressDialog;
+import static com.polarstation.diary10.util.DialogUtils.showProgressDialog;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
 // 일기장 수정, 일기 글 수정하려면 액티비티로 바꿔야 편할듯
 public class WriteFragment extends Fragment implements View.OnClickListener{
@@ -145,7 +144,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                         .setCreateTime(createTime)
                                                         .build();
 
-                                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).push().setValue(diaryModel);
+                                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).push().setValue(diaryModel).addOnSuccessListener( aVoid -> progressDialog.cancel());
                                     });
 
                                 });
@@ -153,7 +152,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                     // 바로 쓸까요? 다이얼로그로 보여주고 확인하면 새 쓰기 프래그먼트
                     // 아니면 리스트 프래그먼트로 replace
                     /// Dialog.
-//                    callback.replaceFragment(type);
+                    callback.replaceFragment(ACCOUNT_TYPE);
                     break;
                 case NEW_PAGE_TYPE:
                     String content = text;
@@ -168,26 +167,30 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                         DiaryModel diaryModel = null;
+                                        String diaryKey = "";
                                         for (DataSnapshot item : dataSnapshot.getChildren()) {
                                             diaryModel = item.getValue(DiaryModel.class);
-                                            if (diaryModel.getTitle().equals(titleOfDiary))
+                                            if (diaryModel.getTitle().equals(titleOfDiary)) {
+                                                diaryKey = item.getKey();
                                                 break;
+                                            }
                                         }
                                         String diaryCreateTime = String.valueOf(diaryModel.getCreateTime());
                                         String pageCreateTime = String.valueOf(Calendar.getInstance().getTimeInMillis());
-                                        String diaryKey = dataSnapshot.getKey();
+
                                         Object timeStamp = ServerValue.TIMESTAMP;
 
                                         if (binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE) {
                                             pushPage(content, timeStamp, diaryKey, "");
                                         } else {
+                                            final String key = diaryKey;
                                             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).putFile(imageUri)
                                                     .addOnCompleteListener(task -> {
                                                         strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
                                                                 .addOnSuccessListener(uri -> {
                                                                     String imageUrl = String.valueOf(uri);
 
-                                                                    pushPage(content, timeStamp, diaryKey, imageUrl);
+                                                                    pushPage(content, timeStamp, key, imageUrl);
                                                                 });
                                                     });
                                         }

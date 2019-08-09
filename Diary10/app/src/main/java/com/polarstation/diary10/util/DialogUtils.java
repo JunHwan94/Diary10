@@ -1,4 +1,4 @@
-package com.polarstation.diary10.Util;
+package com.polarstation.diary10.util;
 
 import android.app.ProgressDialog;
 import android.text.SpannableString;

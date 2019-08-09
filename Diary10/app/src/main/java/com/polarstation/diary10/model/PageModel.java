@@ -1,16 +1,18 @@
 package com.polarstation.diary10.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PageModel {
     private String content;
     private String imageUrl;
     private Object createTime;
-    private String like;
+    private Map<String,Object> likeUserMap = new HashMap<>();
 
     public static class Builder{
         private String content;
         private String imageUrl;
         private Object createTime;
-        private String like;
 
         public Builder setContent(String content) {
             this.content = content;
@@ -27,11 +29,6 @@ public class PageModel {
             return this;
         }
 
-        public Builder setLike(String like) {
-            this.like = like;
-            return this;
-        }
-
         public PageModel build(){
             return new PageModel(this);
         }
@@ -42,7 +39,6 @@ public class PageModel {
         content = builder.content;
         imageUrl = builder.imageUrl;
         createTime = builder.createTime;
-        like = builder.like;
     }
 
     public String getContent() {
@@ -55,9 +51,5 @@ public class PageModel {
 
     public Object getCreateTime() {
         return createTime;
-    }
-
-    public String getLike() {
-        return like;
     }
 }
