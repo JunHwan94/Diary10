@@ -9,6 +9,7 @@ public class DiaryModel {
     private String coverImageUrl;
     private boolean isPrivate;
     private long createTime;
+    private String key;
     private Map<String, PageModel> pages = new HashMap<>();
 
     public static class Builder{
@@ -76,6 +77,10 @@ public class DiaryModel {
 
     public long getCreateTime(){
         return createTime;
+    }
+
+    public String getKey(){
+        return key;
     }
 
     public Map<String, PageModel> getPages() {

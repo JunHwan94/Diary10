@@ -8,6 +8,7 @@ import androidx.databinding.DataBindingUtil;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -45,7 +46,6 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private FirebaseAuth.AuthStateListener authStateListener;
     private FirebaseDatabase dbInstance;
     private String uid;
-    private boolean isInFdb;
 
     private CallbackManager callbackManager;
 
@@ -158,7 +158,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
 
     private void checkUid(String userName, String profileImageUrl){
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        dbInstance.getReference().child(getString(R.string.fdb_users)).orderByChild(uid)
+        dbInstance.getReference().child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {

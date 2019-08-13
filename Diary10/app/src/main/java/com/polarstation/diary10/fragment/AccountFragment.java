@@ -1,6 +1,7 @@
 package com.polarstation.diary10.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -8,15 +9,19 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.facebook.login.LoginManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.BaseActivity;
+import com.polarstation.diary10.DiaryActivity;
 import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.EditAccountActivity;
 import com.polarstation.diary10.PhotoViewActivity;
@@ -39,15 +44,24 @@ import static com.polarstation.diary10.EditAccountActivity.COMMENT_KEY;
 import static com.polarstation.diary10.EditAccountActivity.NAME_KEY;
 import static com.polarstation.diary10.EditAccountActivity.URI_KEY;
 import static com.polarstation.diary10.MainActivity.USER_MODEL_KEY;
-import static com.polarstation.diary10.util.DialogUtils.showProgressDialog;
+import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
+import static com.polarstation.diary10.fragment.ListFragment.KEY_KEY;
+import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
+import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
     private FirebaseDatabase dbInstance;
-    private FragmentAccountBinding binding;
+    private FirebaseAuth authInstance;
+    private static FragmentAccountBinding binding;
     private String imageUrl = "";
     private ProgressDialog progressDialog;
     private DiaryRecyclerViewAdapter adapter;
     private List<DiaryModel> diaryModelList;
+    private boolean isChanged = false;
+    private FragmentCallBack callback;
+    private Animation translateLeft;
+    private Animation translateRight;
+    static boolean isMenuOpen = false;
 
     public static final int PICK_FROM_ALBUM_CODE = 100;
     public static final int EDIT_COMPLETE_CODE = 101;
@@ -59,24 +73,68 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_account, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
         dbInstance = FirebaseDatabase.getInstance();
+        authInstance = FirebaseAuth.getInstance();
 
-        Bundle bundle = getArguments();
-        setUserInfo(bundle);
+        progressDialog = new ProgressDialog(getContext());
+        callback.showProgressDialog(getString(R.string.loading_data));
+
+        if(!isChanged) {
+            Bundle bundle = getArguments();
+            setUserInfo(bundle);
+        }else{
+            String uid = authInstance.getCurrentUser().getUid();
+            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    UserModel userModel = dataSnapshot.getValue(UserModel.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(USER_MODEL_KEY, userModel);
+                    setUserInfo(bundle);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
 
         binding.accountFragmentProfileImageView.setOnClickListener(this);
         binding.accountFragmentEditButton.setOnClickListener(this);
+        binding.accountFragmentMenuButton.setOnClickListener(this);
+        binding.accountFragmentSignOutButton.setOnClickListener(this);
+        binding.accountFragmentLicenseGuideButton.setOnClickListener(this);
 
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
         binding.accountFragmentRecyclerView.setLayoutManager(layoutManager);
         adapter = new DiaryRecyclerViewAdapter();
+        adapter.setOnItemClickListener((holder, view, position) -> {
+            DiaryModel diaryModel = adapter.getItem(position);
+            Intent intent = new Intent(getContext(), DiaryActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra(TITLE_KEY, diaryModel.getTitle());
+            intent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
+            intent.putExtra(IMAGE_URL_KEY, diaryModel.getCoverImageUrl());
+            intent.putExtra(KEY_KEY, diaryModel.getKey());
+            startActivity(intent);
+        });
         binding.accountFragmentRecyclerView.setAdapter(adapter);
         loadMyDiaries();
+        setButtonAnimation();
 
         return binding.getRoot();
     }
 
+    private void setButtonAnimation(){
+        translateLeft = AnimationUtils.loadAnimation(getContext(), R.anim.translate_left);
+        translateRight = AnimationUtils.loadAnimation(getContext(), R.anim.translate_right);
+        Animation.AnimationListener listener = new SlidingAnimationListener();
+        translateLeft.setAnimationListener(listener);
+        translateRight.setAnimationListener(listener);
+    }
+
     private void loadMyDiaries(){
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String uid = authInstance.getCurrentUser().getUid();
         diaryModelList = new ArrayList<>();
         dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
                 .addValueEventListener(new ValueEventListener() {
@@ -111,20 +169,26 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         binding.accountFragmentNameTextView.setText(userName);
         String comment = userModel.getComment();
         binding.accountFragmentCommentTextView.setText(comment);
-
-        progressDialog.cancel();
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        progressDialog = new ProgressDialog(context);
-        showProgressDialog(progressDialog, getString(R.string.loading_data));
+        if(context instanceof FragmentCallBack)
+            callback = (FragmentCallBack) context;
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        if(callback != null)
+            callback = null;
+    }
+
+    @Override
+    public void onPause() {
+        isMenuOpen = false;
+        super.onPause();
     }
 
     @Override
@@ -144,6 +208,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
             }
             binding.accountFragmentNameTextView.setText(name);
             binding.accountFragmentCommentTextView.setText(comment);
+            isChanged = true;
         }
     }
 
@@ -168,6 +233,55 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                 intent.putExtra(COMMENT_KEY, comment);
                 startActivityForResult(intent, EDIT_COMPLETE_CODE);
                 break;
+            case R.id.accountFragment_menuButton:
+                if(isMenuOpen)
+                    binding.accountFragmentSlideMenu.startAnimation(translateRight);
+                else {
+                    binding.accountFragmentSlideMenu.setVisibility(View.VISIBLE);
+                    binding.accountFragmentSlideMenu.startAnimation(translateLeft);
+                }
+                break;
+            case R.id.accountFragment_signOutButton:
+                authInstance.signOut();
+                LoginManager.getInstance().logOut();
+                new AlertDialog.Builder(getContext()).setTitle(getString(R.string.sign_out)).setMessage(getString(R.string.dialog_quit))
+                        .setPositiveButton(getString(R.string.confirm), (dialogInterface, i) -> callback.quitApp() ).show();
+                break;
+            case R.id.accountFragment_licenseGuideButton:
+                new AlertDialog.Builder(getContext()).setTitle(getString(R.string.font_license_title))
+                        .setMessage("\n1. " + getString(R.string.font_license_1) +
+                                "\n\n2. " + getString(R.string.font_license_2) +
+                                "\n\n3. " + getString(R.string.font_license_3) +
+                                "\n\n4. " + getString(R.string.font_license_4) +
+                                "\n\n5. " + getString(R.string.font_license_5)).setPositiveButton(getString(R.string.confirm), null).show();
+                break;
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        callback.cancelDialog();
+    }
+
+    public static class SlidingAnimationListener implements Animation.AnimationListener{
+        @Override
+        public void onAnimationStart(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            if(isMenuOpen){
+                binding.accountFragmentSlideMenu.setVisibility(View.INVISIBLE);
+                isMenuOpen = false;
+            }else
+                isMenuOpen = true;
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
         }
     }
 }

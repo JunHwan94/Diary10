@@ -1,12 +1,15 @@
 package com.polarstation.diary10.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,7 +33,9 @@ import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
 
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,6 +60,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private ProgressDialog progressDialog;
     private Bundle bundle;
     private FragmentCallBack callback;
+    int type;
 
     public static final int LIST_TYPE = 0;
     public static final int CREATE_TYPE = 1;
@@ -69,21 +76,28 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         dbInstance = FirebaseDatabase.getInstance();
 
         bundle = getArguments();
-        int type = NEW_PAGE_TYPE;
+        type = NEW_DIARY_TYPE;
         if(bundle != null)
-            type = bundle.getInt(TYPE_KEY, 0);
-        if(type == NEW_PAGE_TYPE){
-            //새 일기장 만들건지 다이얼로그 보여주기
-            // 확인 -> type = NEW_DIARY_TYPE
-            // 취소 -> 진행
-        }
+            type = bundle.getInt(TYPE_KEY, 1);
+
         setUI(type);
+        if(type == NEW_PAGE_TYPE){
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setMessage(getString(R.string.create_diary_or_page)).setPositiveButton(getString(R.string.confirm), ((dialogInterface, i) ->{
+                type = NEW_DIARY_TYPE;
+                setUI(type);
+            })).setNegativeButton(getString(R.string.cancel), ((dialogInterface, i) ->
+                setUI(type)
+            )).show();
+
+            setUI(type);
+        }
 
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         progressDialog = new ProgressDialog(getContext());
 
         binding.writeFragmentChildConstraintLayout.setOnClickListener(this);
-        setSaveButtonListener(type);
+        setSaveButtonListener();
         binding.writeFragmentCancelButton.setOnClickListener(this);
 
         // 키보드 올라오거나 내려갈때 이벤트
@@ -103,6 +117,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 binding.writeFragmentSwitch.setVisibility(View.VISIBLE);
                 binding.writeFragmentGuideTextView.setText(R.string.select_cover);
                 binding.writeFragmentEditText.setHint(R.string.write_title);
+                binding.writeFragmentEditText.setMaxEms(15);
                 break;
             case NEW_PAGE_TYPE:
                 List<String> diaryTitleList = bundle.getStringArrayList(LIST_KEY);
@@ -116,7 +131,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         binding.writeFragmentSpinner.setAdapter(spinnerAdapter);
     }
 
-    private void setSaveButtonListener(int type){
+    private void setSaveButtonListener(){
         binding.writeFragmentSaveButton.setOnClickListener(v -> {
             String text = String.valueOf(binding.writeFragmentEditText.getText());
             switch(type){
@@ -144,15 +159,39 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                         .setCreateTime(createTime)
                                                         .build();
 
-                                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).push().setValue(diaryModel).addOnSuccessListener( aVoid -> progressDialog.cancel());
-                                    });
+                                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).push().setValue(diaryModel).addOnSuccessListener( aVoid -> {
+                                            progressDialog.cancel();
 
+                                            // DiaryModel 저장 후 바로 key값 업데이트
+                                            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_title)).equalTo(title)
+                                                    .addValueEventListener(new ValueEventListener() {
+                                                        @Override
+                                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                            String key = null;
+                                                            for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                                                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                                                if(diaryModel.getUid().equals(uid));
+                                                                key = snapshot.getKey();
+                                                            }
+                                                            Map<String, Object> keyMap = new HashMap<>();
+                                                            keyMap.put(getString(R.string.fdb_key), key);
+                                                            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(key).updateChildren(keyMap).addOnSuccessListener(aVoid ->  {
+                                                                Toast.makeText(getContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
+
+                                                                callback.replaceFragment(ACCOUNT_TYPE);
+                                                            });
+                                                        }
+
+                                                        @Override
+                                                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                                        }
+                                                    });
+                                        });
+
+                                    });
                                 });
                     }
-                    // 바로 쓸까요? 다이얼로그로 보여주고 확인하면 새 쓰기 프래그먼트
-                    // 아니면 리스트 프래그먼트로 replace
-                    /// Dialog.
-                    callback.replaceFragment(ACCOUNT_TYPE);
                     break;
                 case NEW_PAGE_TYPE:
                     String content = text;
@@ -176,9 +215,8 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                             }
                                         }
                                         String diaryCreateTime = String.valueOf(diaryModel.getCreateTime());
-                                        String pageCreateTime = String.valueOf(Calendar.getInstance().getTimeInMillis());
-
-                                        Object timeStamp = ServerValue.TIMESTAMP;
+                                        long timeStamp = Calendar.getInstance().getTimeInMillis();
+                                        String pageCreateTime = String.valueOf(timeStamp);
 
                                         if (binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE) {
                                             pushPage(content, timeStamp, diaryKey, "");
@@ -194,8 +232,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                                 });
                                                     });
                                         }
-                                        binding.writeFragmentEditText.setText("");
-
                                     }
 
                                     @Override
@@ -206,10 +242,12 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                     }
                     break;
             }
+
+            binding.writeFragmentEditText.setText("");
         });
     }
 
-    private void pushPage(String content, Object timeStamp, String diaryKey, String imageUrl){
+    private void pushPage(String content, long timeStamp, String diaryKey, String imageUrl){
         PageModel pageModel =
                 new PageModel.Builder()
                         .setContent(content)
@@ -221,9 +259,36 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 .addOnSuccessListener( aVoid -> {
                     progressDialog.cancel();
 
-                    Toast.makeText(getContext().getApplicationContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-                    // 저장 후 내 페이지로 프래그먼트 변경
-                    callback.replaceFragment(ACCOUNT_TYPE);
+                    Log.d("timestamp", timeStamp+"");
+                    // 저장 후 PageModel key값 바로 업데이트하기
+                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).orderByChild(getString(R.string.fdb_createTime)).equalTo(timeStamp)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    String pageKey = null;
+                                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                                        PageModel pageModel = snapshot.getValue(PageModel.class);
+                                        if(pageModel.getContent().equals(content))
+                                            pageKey = snapshot.getKey();
+                                    }
+
+                                    Log.d("pageKey", pageKey);
+                                    Map<String, Object> map = new HashMap<>();
+                                    map.put(getString(R.string.fdb_key), pageKey);
+                                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
+                                    .addOnSuccessListener(aVoid1 -> {
+                                        Toast.makeText(getContext().getApplicationContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
+                                        // 저장 후 내 페이지로 프래그먼트 변경
+                                        callback.replaceFragment(ACCOUNT_TYPE);
+                                    });
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+
                 });
     }
 
@@ -273,5 +338,11 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         callback.findMyDiary();
         if(callback != null)
             callback = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        progressDialog.cancel();
     }
 }

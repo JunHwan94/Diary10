@@ -82,12 +82,57 @@
 
         <Button
             android:id="@+id/accountFragment_editButton"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="30dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="15dp"
             android:background="@android:drawable/ic_menu_edit"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/accountFragment_nameTextView"
+            app:layout_constraintStart_toEndOf="@+id/accountFragment_nameTextView"
             app:layout_constraintTop_toTopOf="@+id/accountFragment_nameTextView" />
+
+        <Button
+            android:id="@+id/accountFragment_menuButton"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/ic_menu"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/accountFragment_slideMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:orientation="vertical"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/accountFragment_menuButton">
+
+            <Button
+                android:id="@+id/accountFragment_signOutButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/light_grey"
+                android:elevation="3dp"
+                android:text="@string/sign_out"
+                android:textSize="15sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/accountFragment_menuButton" />
+
+            <Button
+                android:id="@+id/accountFragment_licenseGuideButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:background="@color/light_grey"
+                android:elevation="3dp"
+                android:text="@string/font_license"
+                android:textSize="15sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/accountFragment_menuButton" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

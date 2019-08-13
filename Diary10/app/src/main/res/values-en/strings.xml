@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Diary 10</string>
+    <string name="log_in">Sign in</string>
+    <string name="sign_up">Sign up</string>
+    <string name="log_in_please">Sign in</string>
+    <string name="secret_diary">Make secret</string>
+    <string name="select_cover">Choose cover</string>
+    <string name="select_image">Choose today\'s image</string>
+    <string name="time_zone">America/NewYork</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="auth_failed">Auth failed</string>
+    <string name="auth_success">Signed in</string>
+    <string name="write_content_toast">Type content</string>
+    <string name="comment">Introduction</string>
+    <string name="name">Name</string>
+    <string name="write_content">Today is..</string>
+    <string name="write_title">Type title of diary</string>
+    <string name="my_diaries">My Diaries</string>
+    <string name="loading_data">Loading data..</string>
+    <string name="uploading">Uploading..</string>
+    <string name="confirm">Confirm</string>
+    <string name="create_diary_or_page">Do you want to make a new diary?</string>
+    <string name="write_now">Do you want to write now?</string>
+    <string name="write_name">Type name</string>
+    <string name="uploaded">Uploaded</string>
+    <string name="fdb_key">key</string>
+    <string name="email">email</string>
+    <string name="sign_out">Sign out</string>
+    <string name="dialog_quit">Signed out. Quit the App</string>
+    <string name="font_license">Font license</string>
+    <string name="font_license_title">S-core font license</string>
+    <string name="font_license_1">S-Core\'s intellectual property rights are distributed through the S-Core homepage.</string>
+    <string name="font_license_2">"S-core fonts are free to all users, including individual and corporate users, and can be freely redistributed. "</string>
+    <string name="font_license_3">"S-core fonts may not be modified or sold by anyone other than intellectual property rights for any reason, and they must be used as they are distributed. "</string>
+    <string name="font_license_4">"S-core fonts may be bundled, redistributed or sold with other software, including this copyright notice. If you have difficulty including copyright notices for escore fonts, we recommend that you mark the source of the escore fonts. "</string>
+    <string name="font_license_5">"Images of printed materials and advertisements (including online) using S-core fonts can be used for the promotion of S-Core. If you do not want to do this, you can ask us at any time. "</string>
+</resources>

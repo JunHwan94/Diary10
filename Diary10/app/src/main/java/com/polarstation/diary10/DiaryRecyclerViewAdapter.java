@@ -57,8 +57,8 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
         this.diaryModelList = diaryModelList;
     }
 
-    public void getItem(int position){
-        diaryModelList.get(position);
+    public DiaryModel getItem(int position){
+        return diaryModelList.get(position);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener){
