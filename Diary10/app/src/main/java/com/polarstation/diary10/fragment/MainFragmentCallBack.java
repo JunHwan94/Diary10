@@ -1,10 +1,11 @@
 package com.polarstation.diary10.fragment;
 
-public interface FragmentCallBack {
+import android.app.Activity;
+
+public interface MainFragmentCallBack {
     void findMyDiary();
     void replaceFragment(int type);
     void quitApp();
-    void showProgressDialog(String stringResource);
     void cancelDialog();
-    void finishActivity();
+    Activity getActivity();
 }

@@ -2,12 +2,12 @@ package com.polarstation.diary10.fragment;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,12 +18,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.polarstation.diary10.BaseActivity;
@@ -49,7 +47,7 @@ import static com.polarstation.diary10.MainActivity.NEW_PAGE_TYPE;
 import static com.polarstation.diary10.MainActivity.TYPE_KEY;
 import static com.polarstation.diary10.util.DialogUtils.showProgressDialog;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
-// 일기장 수정, 일기 글 수정하려면 액티비티로 바꿔야 편할듯
+
 public class WriteFragment extends Fragment implements View.OnClickListener{
     private FragmentWriteBinding binding;
     private FirebaseStorage strInstance;
@@ -59,7 +57,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private String uid;
     private ProgressDialog progressDialog;
     private Bundle bundle;
-    private FragmentCallBack callback;
+    private MainFragmentCallBack callback;
     int type;
 
     public static final int LIST_TYPE = 0;
@@ -176,9 +174,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                             Map<String, Object> keyMap = new HashMap<>();
                                                             keyMap.put(getString(R.string.fdb_key), key);
                                                             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(key).updateChildren(keyMap).addOnSuccessListener(aVoid ->  {
-                                                                Toast.makeText(getContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-
-                                                                callback.replaceFragment(ACCOUNT_TYPE);
+                                                                new Handler().postDelayed( ()-> callback.replaceFragment(ACCOUNT_TYPE), 1000);
                                                             });
                                                         }
 
@@ -328,8 +324,8 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if(context instanceof FragmentCallBack)
-            callback = (FragmentCallBack) context;
+        if(context instanceof MainFragmentCallBack)
+            callback = (MainFragmentCallBack) context;
     }
 
     @Override

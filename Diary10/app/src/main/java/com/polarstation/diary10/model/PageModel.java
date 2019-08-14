@@ -11,7 +11,6 @@ public class PageModel implements Parcelable {
     private String imageUrl;
     private long createTime;
     private String key;
-    private Map<String,Object> likeUserMap = new HashMap<>();
 
     public static class Builder{
         private String content;
@@ -91,9 +90,5 @@ public class PageModel implements Parcelable {
 
     public String getKey(){
         return key;
-    }
-
-    public Map<String, Object> getLikeUserMap() {
-        return likeUserMap;
     }
 }

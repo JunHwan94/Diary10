@@ -10,7 +10,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".WriteDiaryActivity"></activity>
+        <activity android:name=".WriterAccountActivity"></activity>
+        <activity android:name=".WriteDiaryActivity" />
         <activity
             android:name=".DiaryActivity"
             android:screenOrientation="portrait" />

@@ -11,6 +11,7 @@ public class DiaryModel {
     private long createTime;
     private String key;
     private Map<String, PageModel> pages = new HashMap<>();
+    private Map<String, Boolean> likeUsers = new HashMap<>();
 
     public static class Builder{
         private String title;
@@ -71,7 +72,7 @@ public class DiaryModel {
         return coverImageUrl;
     }
 
-    public boolean isPrivate() {
+    public boolean getPrivate() {
         return isPrivate;
     }
 
@@ -85,5 +86,9 @@ public class DiaryModel {
 
     public Map<String, PageModel> getPages() {
         return pages;
+    }
+
+    public Map<String, Boolean> getLikeUsers(){
+        return likeUsers;
     }
 }

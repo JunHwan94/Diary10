@@ -48,19 +48,8 @@
             app:layout_constraintStart_toEndOf="@+id/accountFragment_profileImageView"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/accountFragment_myDiaryTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:text="@string/my_diaries"
-            android:textSize="25sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/accountFragment_guideLine" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/accountFragment_recyclerView"
+        <FrameLayout
+            android:id="@+id/accountFragment_frameLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="10dp"
@@ -78,7 +67,7 @@
             android:background="@color/letter_grey"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/accountFragment_myDiaryTextView" />
+            app:layout_constraintTop_toBottomOf="@+id/accountFragment_tabLayout" />
 
         <Button
             android:id="@+id/accountFragment_editButton"
@@ -133,6 +122,26 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/accountFragment_menuButton" />
         </LinearLayout>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/accountFragment_tabLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/accountFragment_guideLine">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/my_diaries" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/liked_diaries" />
+        </com.google.android.material.tabs.TabLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

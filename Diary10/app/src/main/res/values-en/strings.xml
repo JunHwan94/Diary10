@@ -36,4 +36,16 @@
     <string name="font_license_3">"S-core fonts may not be modified or sold by anyone other than intellectual property rights for any reason, and they must be used as they are distributed. "</string>
     <string name="font_license_4">"S-core fonts may be bundled, redistributed or sold with other software, including this copyright notice. If you have difficulty including copyright notices for escore fonts, we recommend that you mark the source of the escore fonts. "</string>
     <string name="font_license_5">"Images of printed materials and advertisements (including online) using S-core fonts can be used for the promotion of S-Core. If you do not want to do this, you can ask us at any time. "</string>
+    <string name="fdb_content">content</string>
+    <string name="diaries">Diaries</string>
+    <string name="date_format">M d, yyyy</string>
+    <string name="delete_diary">Delete diary</string>
+    <string name="edit_diary">Edit cover</string>
+    <string name="delete_page">Delete page</string>
+    <string name="edit_page">Edit page</string>
+    <string name="new_page">Write</string>
+    <string name="delete_success">Delete success</string>
+    <string name="search">Search</string>
+    <string name="select_new_image">Select new image</string>
+    <string name="no_result">No result</string>
 </resources>

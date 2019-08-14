@@ -16,7 +16,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -26,6 +25,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.polarstation.diary10.BaseActivity;
 import com.polarstation.diary10.WriteDiaryActivity;
 import com.polarstation.diary10.R;
+import com.polarstation.diary10.WriterAccountActivity;
 import com.polarstation.diary10.databinding.FragmentPageBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
@@ -33,7 +33,8 @@ import com.polarstation.diary10.model.UserModel;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
+import java.util.HashMap;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,7 +44,7 @@ import androidx.fragment.app.Fragment;
 import static com.polarstation.diary10.DiaryActivity.IS_COVER_KEY;
 import static com.polarstation.diary10.DiaryActivity.PAGE_MODEL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.KEY_KEY;
+import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
 
@@ -60,9 +61,16 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private FirebaseStorage strInstance;
     private String diaryKey;
     private String pageKey;
-    private FragmentCallBack callback;
+    private String title;
+    private String content;
+    private long pageCreateTime;
+    private PageFragmentCallback callback;
 
-    private static final int ADD_PAGE_CODE = 100;
+    public static final int EDIT_DIARY_CODE = 100;
+    public static final String CONTENT_KEY = "contentKey";
+    public static final String PAGE_KEY_KEY = "pageKeyKey";
+    public static final String IS_NEW_KEY = "isNewKey";
+    public static final String PAGE_CREATE_TIME_KEY = "pageCreateTimeKey";
 
     @Nullable
     @Override
@@ -77,11 +85,14 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             processBundle(bundle);
 
         setMenu();
+        loadLikeOrNot();
 
         binding.pageFragmentMenuButton.setOnClickListener(this);
         binding.pageFragmentDeleteDiaryButton.setOnClickListener(this);
         binding.pageFragmentEditDiaryButton.setOnClickListener(this);
-        binding.pageFragmentNewPageButton.setOnClickListener(this);
+        binding.pageFragmentWritePageButton.setOnClickListener(this);
+        binding.pageFragmentWriterTextView.setOnClickListener(this);
+        binding.pageFragmentLikeButton.setOnClickListener(this);
 
         return binding.getRoot();
     }
@@ -90,6 +101,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         if(uid.equals(writerUid)) {
             binding.pageFragmentMenuButton.setVisibility(View.VISIBLE);
+            binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
 
             translateLeft = AnimationUtils.loadAnimation(getContext(), R.anim.translate_left);
             translateRight = AnimationUtils.loadAnimation(getContext(), R.anim.translate_right);
@@ -99,6 +111,26 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         }
     }
 
+    private void loadLikeOrNot(){
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                        Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
+                        if(likeUsers.keySet().contains(uid) && likeUsers.get(uid)){
+                            binding.pageFragmentLikeButton.setSelected(true);
+                        }else
+                            binding.pageFragmentLikeButton.setSelected(false);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
     private void processBundle(Bundle bundle){
         isCover = bundle.getBoolean(IS_COVER_KEY);
         if(isCover){
@@ -106,12 +138,12 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             binding.pageFragmentWriterImageView.setVisibility(View.VISIBLE);
             binding.pageFragmentWriterTextView.setVisibility(View.VISIBLE);
             binding.pageFragmentContentTextView.setTypeface(Typeface.createFromAsset(getContext().getAssets(), "fonts/scdream4.otf"));
-            binding.pageFragmentNewPageButton.setVisibility(View.VISIBLE);
+            binding.pageFragmentWritePageButton.setVisibility(View.VISIBLE);
 
-            String title = bundle.getString(TITLE_KEY);
+            title = bundle.getString(TITLE_KEY);
             writerUid = bundle.getString(WRITER_UID_KEY);
             imageUrl = bundle.getString(IMAGE_URL_KEY);
-            diaryKey = bundle.getString(KEY_KEY);
+            diaryKey = bundle.getString(DIARY_KEY_KEY);
 
             dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -122,10 +154,14 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                             String writerImageUrl = userModel.getProfileImageUrl();
                             binding.pageFragmentWriterTextView.setText(writer);
-                            Glide.with(getContext())
-                                    .load(writerImageUrl)
-                                    .apply(new RequestOptions().circleCrop())
-                                    .into(binding.pageFragmentWriterImageView);
+                            try {
+                                Glide.with(getContext())
+                                        .load(writerImageUrl)
+                                        .apply(new RequestOptions().circleCrop())
+                                        .into(binding.pageFragmentWriterImageView);
+                            }catch(Exception e){
+                                Toast.makeText(getContext(), "다시 시도해주세요", Toast.LENGTH_SHORT).show();
+                            }
 
                             binding.pageFragmentContentTextView.setText(title);
                         }
@@ -138,16 +174,16 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             setCoverImage();
         }else{
             PageModel pageModel = bundle.getParcelable(PAGE_MODEL_KEY);
-            String content = pageModel.getContent();
-            long createTime = pageModel.getCreateTime();
+            content = pageModel.getContent();
+            pageCreateTime = pageModel.getCreateTime();
             imageUrl = pageModel.getImageUrl();
             pageKey = pageModel.getKey();
-            diaryKey = bundle.getString(KEY_KEY);
+            diaryKey = bundle.getString(DIARY_KEY_KEY);
             writerUid = bundle.getString(WRITER_UID_KEY);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy년 M월 d일");
-            sdf.setTimeZone(TimeZone.getTimeZone(getString(R.string.time_zone)));
-            Date date = new Date(createTime);
+            SimpleDateFormat sdf = new SimpleDateFormat(getString(R.string.date_format));
+//            sdf.setTimeZone(TimeZone.getTimeZone(getString(R.string.time_zone)));
+            Date date = new Date(pageCreateTime);
 
             binding.pageFragmentContentTextView.setTextSize(22.0f);
             binding.pageFragmentContentTextView.setText(content);
@@ -155,7 +191,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
             binding.pageFragmentDeleteDiaryButton.setText(getString(R.string.delete_page));
             binding.pageFragmentEditDiaryButton.setText(getString(R.string.edit_page));
-            binding.pageFragmentSlideMenu.removeView(binding.pageFragmentNewPageButton);
+            binding.pageFragmentSlideMenu.removeView(binding.pageFragmentWritePageButton);
+            binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
         }
 
         Glide.with(getContext())
@@ -194,8 +231,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.pageFragment_deleteDiaryButton:
                 if(isCover){
-                    Log.d("diaryKey" ,diaryKey + "");
-                    Log.d("uid" ,uid + "");
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -204,14 +239,13 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                     long diaryCreateTime = diaryModel.getCreateTime();
                                     String title = diaryModel.getTitle();
 
-                                    Log.d("diaryCreateTime" ,diaryCreateTime + "");
                                     strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(title).delete()
                                             .addOnSuccessListener( aVoid -> {
                                                 dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).removeValue()
                                                         .addOnSuccessListener( aVoid1 -> {
                                                             Toast.makeText(getContext(), getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
 
-                                                            callback.finishActivity();
+                                                            callback.finishDiaryActivity();
                                                         });
                                             });
                                 }
@@ -224,8 +258,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
 
                 }else{
-                    Log.d("diaryKey" ,diaryKey + "");
-                    Log.d("uid" ,uid + "");
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -239,17 +271,15 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                             break;
                                         }
                                     }
-                                    Log.d("diaryCreateTime" ,diaryCreateTime + "");
-                                    Log.d("pageCreateTime" ,pageCreateTime+ "");
-                                    Log.d("pageKey" ,pageKey+ "");
                                     strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).delete()
                                             .addOnSuccessListener(aVoid -> {
                                                 dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).removeValue()
-                                                        .addOnSuccessListener(aVoid1 -> {}
-                                                                // DiaryActivity애서 파이어베이스로 요청해서 업데이트 callback쓰기
-                                                        );
-                                            });
+                                                        .addOnSuccessListener(aVoid1 -> {
+                                                            Toast.makeText(getContext(), getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
 
+                                                            callback.finishDiaryActivity();
+                                                        });
+                                            });
                                 }
 
                                 @Override
@@ -261,26 +291,64 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.pageFragment_editDiaryButton:
                 //diarykey 전달, 커버 이미지, 제목 수정
+                startWriteDiaryActivity(isCover);
+                break;
+            case R.id.pageFragment_writePageButton:
+                //diarykey 전달, 하위 pages에 추가하는 액티비티
                 Intent intent = new Intent(getContext(), WriteDiaryActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                startActivityForResult(intent, ADD_PAGE_CODE);
+                intent.putExtra(TITLE_KEY, title);
+                intent.putExtra(IS_NEW_KEY, true);
+                intent.putExtra(DIARY_KEY_KEY, diaryKey);
+                callback.getActivity().startActivityForResult(intent, EDIT_DIARY_CODE);
                 break;
-            case R.id.pageFragment_newPageButton:
-                //diarykey 전달, 하위 pages에 추가하는 액티비티
-                Intent intent1 = new Intent(getContext(), WriteDiaryActivity.class);
-                intent1.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                startActivity(intent1);
+            case R.id.pageFragment_writerTextView:
+                if(!uid.equals(writerUid)) {
+                    Intent writerAccountActivityIntent = new Intent(getContext(), WriterAccountActivity.class);
+                    writerAccountActivityIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    writerAccountActivityIntent.putExtra(WRITER_UID_KEY, writerUid);
+                    startActivity(writerAccountActivityIntent);
+                }
+                break;
+            case R.id.pageFragment_likeButton:
+                if(view.isSelected()){
+                    view.setSelected(false);
+                    processLike(false);
+                }else{
+                    view.setSelected(true);
+                    processLike(true);
+                }
                 break;
         }
+    }
+
+    private void processLike(boolean like){
+        Map<String, Object> map = new HashMap<>();
+        map.put(uid, like);
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.like_users)).updateChildren(map);
+    }
+
+    private void startWriteDiaryActivity(boolean isCover){
+        Intent intent = new Intent(getContext(), WriteDiaryActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra(IMAGE_URL_KEY, imageUrl);
+        intent.putExtra(IS_COVER_KEY, isCover);
+        intent.putExtra(DIARY_KEY_KEY, diaryKey);
+        intent.putExtra(TITLE_KEY, title);
+        if(!isCover) {
+            intent.putExtra(CONTENT_KEY, content);
+            intent.putExtra(PAGE_KEY_KEY, pageKey);
+            intent.putExtra(PAGE_CREATE_TIME_KEY, pageCreateTime);
+        }
+
+        callback.getActivity().startActivityForResult(intent, EDIT_DIARY_CODE);
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if(context instanceof FragmentCallBack)
-            callback = (FragmentCallBack)context;
+        if(context instanceof PageFragmentCallback)
+            callback = (PageFragmentCallback)context;
     }
 
     @Override
@@ -293,6 +361,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onPause() {
         isMenuOpen = false;
+        binding.pageFragmentSlideMenu.setVisibility(View.INVISIBLE);
         super.onPause();
     }
 

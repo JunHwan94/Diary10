@@ -10,38 +10,51 @@
         android:focusable="true"
         android:focusableInTouchMode="true">
 
+        <!--<ImageView-->
+            <!--android:id="@+id/writeActivity_coverImageView"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_marginTop="10dp"-->
+            <!--android:visibility="invisible"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintHeight_percent="0.6"-->
+            <!--app:layout_constraintStart_toStartOf="parent"-->
+            <!--app:layout_constraintTop_toBottomOf="@+id/writeActivity_cancelButton"-->
+            <!--app:layout_constraintWidth_default="percent"-->
+            <!--tools:srcCompat="@tools:sample/avatars" />-->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/writeFragment_childConstraintLayout"
-            android:layout_width="match_parent"
+        android:id="@+id/writeActivity_childConstraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/writeActivity_cancelButton"
+        app:layout_constraintWidth_default="percent">
+
+        <ImageView
+            android:id="@+id/writeActivity_coverImageView"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.6"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/writeFragment_cancelButton"
-            app:layout_constraintWidth_default="percent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0"
+            tools:srcCompat="@tools:sample/avatars" />
 
             <ImageView
-                android:id="@+id/writeFragment_coverImageView"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_marginTop="5dp"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="1.0"
-                tools:srcCompat="@tools:sample/avatars" />
-
-            <ImageView
-                android:id="@+id/writeFragment_guideImageView"
+                android:id="@+id/writeActivity_guideImageView"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
                 android:layout_gravity="center"
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/ic_image_black"
+                android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -49,21 +62,22 @@
                 tools:srcCompat="@tools:sample/avatars" />
 
             <TextView
-                android:id="@+id/writeFragment_guideTextView"
+                android:id="@+id/writeActivity_guideTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
                 android:text="@string/select_image"
                 android:textSize="20sp"
+                android:visibility="invisible"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/writeFragment_guideImageView" />
+                app:layout_constraintTop_toBottomOf="@+id/writeActivity_guideImageView" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
         <EditText
-            android:id="@+id/writeFragment_EditText"
+            android:id="@+id/writeActivity_EditText"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="10dp"
@@ -76,12 +90,12 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.789"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/writeFragment_switch"
+            app:layout_constraintTop_toBottomOf="@+id/writeActivity_switch"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"/>
 
         <Switch
-            android:id="@+id/writeFragment_switch"
+            android:id="@+id/writeActivity_switch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
@@ -92,10 +106,10 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/writeFragment_childConstraintLayout" />
+            app:layout_constraintTop_toBottomOf="@+id/writeActivity_childConstraintLayout" />
 
         <Button
-            android:id="@+id/writeFragment_cancelButton"
+            android:id="@+id/writeActivity_cancelButton"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:background="@drawable/ic_close_black_24dp"
@@ -103,20 +117,21 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/writeFragment_saveButton"
+            android:id="@+id/writeActivity_saveButton"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/ic_check_black_24dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Spinner
-            android:id="@+id/writeFragment_spinner"
+        <TextView
+            android:id="@+id/writeActivity_titleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/writeFragment_childConstraintLayout"
-            app:layout_constraintEnd_toStartOf="@+id/writeFragment_saveButton"
-            app:layout_constraintStart_toEndOf="@+id/writeFragment_cancelButton"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toTopOf="@+id/writeActivity_childConstraintLayout"
+            app:layout_constraintEnd_toStartOf="@+id/writeActivity_saveButton"
+            app:layout_constraintStart_toEndOf="@+id/writeActivity_cancelButton"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,7 +2,6 @@ package com.polarstation.diary10.fragment;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,19 +14,17 @@ import android.view.animation.AnimationUtils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.facebook.login.LoginManager;
+import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.BaseActivity;
-import com.polarstation.diary10.DiaryActivity;
-import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.EditAccountActivity;
 import com.polarstation.diary10.PhotoViewActivity;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentAccountBinding;
-import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.UserModel;
 
 
@@ -38,27 +35,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import static com.polarstation.diary10.EditAccountActivity.COMMENT_KEY;
 import static com.polarstation.diary10.EditAccountActivity.NAME_KEY;
 import static com.polarstation.diary10.EditAccountActivity.URI_KEY;
 import static com.polarstation.diary10.MainActivity.USER_MODEL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.KEY_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
     private FirebaseDatabase dbInstance;
     private FirebaseAuth authInstance;
     private static FragmentAccountBinding binding;
     private String imageUrl = "";
-    private ProgressDialog progressDialog;
-    private DiaryRecyclerViewAdapter adapter;
-    private List<DiaryModel> diaryModelList;
     private boolean isChanged = false;
-    private FragmentCallBack callback;
+    private MainFragmentCallBack callback;
     private Animation translateLeft;
     private Animation translateRight;
     static boolean isMenuOpen = false;
@@ -66,6 +57,9 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     public static final int PICK_FROM_ALBUM_CODE = 100;
     public static final int EDIT_COMPLETE_CODE = 101;
     public static final String URL_KEY = "urlKey";
+    public static final String FRAGMENT_TYPE_KEY = "fragmentTypeKey";
+    public static final String MY_DIARY = "myDiary";
+    public static final String LIKED_DIARY = "likedDiary";
 
     @Nullable
     @Override
@@ -74,9 +68,6 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         BaseActivity.setGlobalFont(binding.getRoot());
         dbInstance = FirebaseDatabase.getInstance();
         authInstance = FirebaseAuth.getInstance();
-
-        progressDialog = new ProgressDialog(getContext());
-        callback.showProgressDialog(getString(R.string.loading_data));
 
         if(!isChanged) {
             Bundle bundle = getArguments();
@@ -105,24 +96,47 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         binding.accountFragmentSignOutButton.setOnClickListener(this);
         binding.accountFragmentLicenseGuideButton.setOnClickListener(this);
 
-        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
-        binding.accountFragmentRecyclerView.setLayoutManager(layoutManager);
-        adapter = new DiaryRecyclerViewAdapter();
-        adapter.setOnItemClickListener((holder, view, position) -> {
-            DiaryModel diaryModel = adapter.getItem(position);
-            Intent intent = new Intent(getContext(), DiaryActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.putExtra(TITLE_KEY, diaryModel.getTitle());
-            intent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
-            intent.putExtra(IMAGE_URL_KEY, diaryModel.getCoverImageUrl());
-            intent.putExtra(KEY_KEY, diaryModel.getKey());
-            startActivity(intent);
-        });
-        binding.accountFragmentRecyclerView.setAdapter(adapter);
-        loadMyDiaries();
+        setFragment();
         setButtonAnimation();
 
         return binding.getRoot();
+    }
+
+    private void setFragment(){
+        Bundle bundle = new Bundle();
+        DiariesFragment myDiariesFragment = new DiariesFragment();
+        bundle.putString(FRAGMENT_TYPE_KEY, MY_DIARY);
+        myDiariesFragment.setArguments(bundle);
+
+        bundle = new Bundle();
+        DiariesFragment likedDiariesFragment = new DiariesFragment();
+        bundle.putString(FRAGMENT_TYPE_KEY, LIKED_DIARY);
+        likedDiariesFragment.setArguments(bundle);
+
+        getFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
+        binding.accountFragmentTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                switch(tab.getPosition()){
+                    case 0:
+                        getFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
+                        break;
+                    case 1:
+                        getFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, likedDiariesFragment).commit();
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
     }
 
     private void setButtonAnimation(){
@@ -131,29 +145,6 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         Animation.AnimationListener listener = new SlidingAnimationListener();
         translateLeft.setAnimationListener(listener);
         translateRight.setAnimationListener(listener);
-    }
-
-    private void loadMyDiaries(){
-        String uid = authInstance.getCurrentUser().getUid();
-        diaryModelList = new ArrayList<>();
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        diaryModelList.clear();
-                        for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                            diaryModelList.add(diaryModel);
-                        }
-                        adapter.addAll(diaryModelList);
-                        adapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                    }
-                });
     }
 
     private void setUserInfo(Bundle bundle){
@@ -174,8 +165,8 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if(context instanceof FragmentCallBack)
-            callback = (FragmentCallBack) context;
+        if(context instanceof MainFragmentCallBack)
+            callback = (MainFragmentCallBack) context;
     }
 
     @Override
@@ -200,7 +191,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
 
             if(!imageUri.equals("")) {
 //                Toast.makeText(getContext(), String.valueOf(imageUri), Toast.LENGTH_SHORT).show();
-                Glide.with(this.getContext())
+                Glide.with(getContext())
                         .load(imageUri)
                         .apply(new RequestOptions().circleCrop())
                         .into(binding.accountFragmentProfileImageView);
@@ -215,7 +206,6 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View view) {
         Intent intent;
-
         switch(view.getId()){
             case R.id.accountFragment_profileImageView:
                 intent = new Intent(getContext(), PhotoViewActivity.class);
@@ -282,6 +272,32 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         @Override
         public void onAnimationRepeat(Animation animation) {
 
+        }
+    }
+
+    public static class ListPagerAdapter extends FragmentStatePagerAdapter {
+        List<Fragment> fragmentList = new ArrayList<>();
+
+        public ListPagerAdapter(FragmentManager fm){
+            super(fm);
+        }
+
+        public void addItem(Fragment fragment){
+            fragmentList.add(fragment);
+        }
+
+        void clear(){
+            fragmentList.clear();
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return fragmentList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return fragmentList.size();
         }
     }
 }

@@ -18,8 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecyclerViewAdapter.DiaryViewHolder>{
     private List<DiaryModel> diaryModelList = new ArrayList<>();
-    private List<String> keys = new ArrayList<>();
-//    private boolean loadMine;
 
     private OnItemClickListener listener;
 
