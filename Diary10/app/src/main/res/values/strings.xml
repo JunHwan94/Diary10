@@ -76,5 +76,8 @@
     <string name="no_result">검색 결과가 없습니다</string>
     <string name="like_users" translatable="false">likeUsers</string>
     <string name="liked_diaries">좋아하는 일기장</string>
+    <string name="network_not_connected">요청 실패. 인터넷 연결을 확인하세요</string>
+    <string name="network_not_connected_quit">인터넷에 연결되어있지 않습니다. 앱을 종료합니다</string>
+    <string name="image_load_failed">이미지를 불러올 수 없습니다. 인터넷 연결을 확인하세요</string>
 
 </resources>

@@ -48,4 +48,8 @@
     <string name="search">Search</string>
     <string name="select_new_image">Select new image</string>
     <string name="no_result">No result</string>
+    <string name="liked_diaries">Lke</string>
+    <string name="network_not_connected">Request failed. Check internet connection.</string>
+    <string name="network_not_connected_quit">Not connected to Internet. Quit the app</string>
+    <string name="image_load_failed">Image load failed. Check internet connection</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.polarstation.diary10.fragment;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -27,18 +26,21 @@ import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentListBinding;
 import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
+
 public class ListFragment extends Fragment implements View.OnClickListener{
     private FragmentListBinding binding;
     private DiaryRecyclerViewAdapter adapter;
-    private ProgressDialog progressDialog;
     private List<DiaryModel> diaryModelList;
     private MainFragmentCallBack callback;
     private FirebaseDatabase dbInstance;
     private String uid;
+    private int netStat;
 
     public static final String TITLE_KEY = "titleKey";
     public static final String WRITER_UID_KEY = "writerKey";
@@ -49,91 +51,110 @@ public class ListFragment extends Fragment implements View.OnClickListener{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater,R.layout.fragment_list, container, false);
-        dbInstance = FirebaseDatabase.getInstance();
-        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        progressDialog = new ProgressDialog(getContext());
 
-        // progressBar 쓰기
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            dbInstance = FirebaseDatabase.getInstance();
+            uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        adapter = new DiaryRecyclerViewAdapter();
-        adapter.setOnItemClickListener((holder, view, position) -> {
-            DiaryModel diaryModel = adapter.getItem(position);
-            Intent intent = new Intent(getContext(), DiaryActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            adapter = new DiaryRecyclerViewAdapter();
+            adapter.setOnItemClickListener((holder, view, position) -> {
+                DiaryModel diaryModel = adapter.getItem(position);
+                Intent intent = new Intent(getContext(), DiaryActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-            // key 넘겨주기
-            intent.putExtra(DIARY_KEY_KEY, diaryModel.getKey());
-            intent.putExtra(TITLE_KEY, diaryModel.getTitle());
-            intent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
-            intent.putExtra(IMAGE_URL_KEY, diaryModel.getCoverImageUrl());
-            startActivity(intent);
-        });
+                // key 넘겨주기
+                intent.putExtra(DIARY_KEY_KEY, diaryModel.getKey());
+                intent.putExtra(TITLE_KEY, diaryModel.getTitle());
+                intent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
+                intent.putExtra(IMAGE_URL_KEY, diaryModel.getCoverImageUrl());
+                startActivity(intent);
+            });
 
-        diaryModelList = new ArrayList<>();
-        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
-        binding.listFragmentRecyclerView.setLayoutManager(layoutManager);
-        binding.listFragmentRecyclerView.setAdapter(adapter);
-        loadDiaries();
+            diaryModelList = new ArrayList<>();
+            GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+            binding.listFragmentRecyclerView.setLayoutManager(layoutManager);
+            binding.listFragmentRecyclerView.setAdapter(adapter);
+            loadDiaries();
 
-        binding.listFragmentRefreshButton.setOnClickListener(this);
-        binding.listFragmentSearchButton.setOnClickListener(this);
+            binding.listFragmentRefreshButton.setOnClickListener(this);
+            binding.listFragmentSearchButton.setOnClickListener(this);
 
-        new TedKeyboardObserver(getActivity()).listen(isShow-> {
-            if(!isShow){
-                binding.listFragmentSearchEditText.clearFocus();
-            }
-        });
+            new TedKeyboardObserver(getActivity()).listen(isShow -> {
+                if (!isShow) {
+                    binding.listFragmentSearchEditText.clearFocus();
+                }
+            });
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
 
         return binding.getRoot();
     }
 
+    private void setViewWhenLoading(){
+        binding.listFragmentProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void setViewWhenLoaded(){
+        binding.listFragmentProgressBar.setVisibility(View.INVISIBLE);
+    }
+
     private void searchDiaries(String searchWord){
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        List<DiaryModel> diaryModelList = new ArrayList<>();
-                        for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                            String title = diaryModel.getTitle();
-                            String writerUid = diaryModel.getUid();
-                            if(title.contains(searchWord) && !writerUid.equals(uid))
-                                diaryModelList.add(diaryModel);
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            setViewWhenLoading();
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            List<DiaryModel> diaryModelList = new ArrayList<>();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                String title = diaryModel.getTitle();
+                                String writerUid = diaryModel.getUid();
+                                if (title.contains(searchWord) && !writerUid.equals(uid))
+                                    diaryModelList.add(diaryModel);
+                            }
+                            if (diaryModelList.size() == 0)
+                                Toast.makeText(getContext(), getString(R.string.no_result), Toast.LENGTH_SHORT).show();
+                            adapter.addAll(diaryModelList);
+                            adapter.notifyDataSetChanged();
+
+                            setViewWhenLoaded();
                         }
-                        if(diaryModelList.size() == 0)
-                            Toast.makeText(getContext(), getString(R.string.no_result),Toast.LENGTH_SHORT).show();
-                        adapter.addAll(diaryModelList);
-                        adapter.notifyDataSetChanged();
-                    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                    }
-                });
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                        }
+                    });
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void loadDiaries(){
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            setViewWhenLoading();
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            diaryModelList.clear();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                if (!diaryModel.getUid().equals(uid))
+                                    diaryModelList.add(diaryModel);
+                            }
+                            adapter.addAll(diaryModelList);
+                            adapter.notifyDataSetChanged();
 
-                        diaryModelList.clear();
-                        for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                            DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                            if(!diaryModel.getUid().equals(uid))
-                                diaryModelList.add(diaryModel);
+                            setViewWhenLoaded();
                         }
-                        adapter.addAll(diaryModelList);
-                        adapter.notifyDataSetChanged();
-                    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
+                        }
+                    });
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -164,12 +185,5 @@ public class ListFragment extends Fragment implements View.OnClickListener{
         super.onDetach();
         if(callback != null)
             callback = null;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        progressDialog.cancel();
     }
 }

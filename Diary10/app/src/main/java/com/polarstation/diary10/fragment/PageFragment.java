@@ -30,6 +30,7 @@ import com.polarstation.diary10.databinding.FragmentPageBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
 import com.polarstation.diary10.model.UserModel;
+import com.polarstation.diary10.util.NetworkStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -47,6 +48,7 @@ import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class PageFragment extends Fragment implements View.OnClickListener{
     private FragmentPageBinding binding;
@@ -65,6 +67,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private String content;
     private long pageCreateTime;
     private PageFragmentCallback callback;
+    private int netStat;
 
     public static final int EDIT_DIARY_CODE = 100;
     public static final String CONTENT_KEY = "contentKey";
@@ -77,22 +80,28 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_page, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
-        dbInstance = FirebaseDatabase.getInstance();
-        strInstance = FirebaseStorage.getInstance();
 
-        Bundle bundle = getArguments();
-        if(bundle != null)
-            processBundle(bundle);
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            dbInstance = FirebaseDatabase.getInstance();
+            strInstance = FirebaseStorage.getInstance();
 
-        setMenu();
-        loadLikeOrNot();
+            Bundle bundle = getArguments();
+            if (bundle != null)
+                processBundle(bundle);
 
-        binding.pageFragmentMenuButton.setOnClickListener(this);
-        binding.pageFragmentDeleteDiaryButton.setOnClickListener(this);
-        binding.pageFragmentEditDiaryButton.setOnClickListener(this);
-        binding.pageFragmentWritePageButton.setOnClickListener(this);
-        binding.pageFragmentWriterTextView.setOnClickListener(this);
-        binding.pageFragmentLikeButton.setOnClickListener(this);
+            setMenu();
+            loadLikeOrNot();
+
+            binding.pageFragmentMenuButton.setOnClickListener(this);
+            binding.pageFragmentDeleteDiaryButton.setOnClickListener(this);
+            binding.pageFragmentEditDiaryButton.setOnClickListener(this);
+            binding.pageFragmentWritePageButton.setOnClickListener(this);
+            binding.pageFragmentWriterTextView.setOnClickListener(this);
+            binding.pageFragmentLikeButton.setOnClickListener(this);
+            binding.pageFragmentImageView.setOnClickListener(this);
+            binding.pageFragmentLabel.setOnClickListener(this);
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
 
         return binding.getRoot();
     }
@@ -112,23 +121,26 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     }
 
     private void loadLikeOrNot(){
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
-                        Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
-                        if(likeUsers.keySet().contains(uid) && likeUsers.get(uid)){
-                            binding.pageFragmentLikeButton.setSelected(true);
-                        }else
-                            binding.pageFragmentLikeButton.setSelected(false);
-                    }
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                            Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
+                            if(likeUsers.keySet().contains(uid) && likeUsers.get(uid)){
+                                binding.pageFragmentLikeButton.setSelected(true);
+                            }else
+                                binding.pageFragmentLikeButton.setSelected(false);
+                        }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
+                        }
+                    });
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void processBundle(Bundle bundle){
@@ -145,33 +157,36 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             imageUrl = bundle.getString(IMAGE_URL_KEY);
             diaryKey = bundle.getString(DIARY_KEY_KEY);
 
-            dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            UserModel userModel = dataSnapshot.getValue(UserModel.class);
-                            String writer = userModel.getUserName();
+            netStat = NetworkStatus.getConnectivityStatus(getContext());
+            if(netStat == TYPE_CONNECTED) {
+                dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                UserModel userModel = dataSnapshot.getValue(UserModel.class);
+                                String writer = userModel.getUserName();
 
-                            String writerImageUrl = userModel.getProfileImageUrl();
-                            binding.pageFragmentWriterTextView.setText(writer);
-                            try {
-                                Glide.with(getContext())
-                                        .load(writerImageUrl)
-                                        .apply(new RequestOptions().circleCrop())
-                                        .into(binding.pageFragmentWriterImageView);
-                            }catch(Exception e){
-                                Toast.makeText(getContext(), "다시 시도해주세요", Toast.LENGTH_SHORT).show();
+                                String writerImageUrl = userModel.getProfileImageUrl();
+                                binding.pageFragmentWriterTextView.setText(writer);
+                                try {
+                                    Glide.with(getContext())
+                                            .load(writerImageUrl)
+                                            .apply(new RequestOptions().circleCrop())
+                                            .into(binding.pageFragmentWriterImageView);
+                                } catch (Exception e) {
+                                    Toast.makeText(getContext(), "다시 시도해주세요", Toast.LENGTH_SHORT).show();
+                                }
+
+                                binding.pageFragmentContentTextView.setText(title);
                             }
 
-                            binding.pageFragmentContentTextView.setText(title);
-                        }
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
-            setCoverImage();
+                            }
+                        });
+                setCoverImage();
+            }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
         }else{
             PageModel pageModel = bundle.getParcelable(PAGE_MODEL_KEY);
             content = pageModel.getContent();
@@ -218,6 +233,11 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         return metrics;
     }
 
+    private void setViewWhenDeleting(){
+        binding.pageFragmentProgressLayout.setVisibility(View.VISIBLE);
+        binding.pageFragmentMenuButton.setEnabled(false);
+    }
+
     @Override
     public void onClick(View view) {
         switch(view.getId()){
@@ -230,19 +250,21 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 }
                 break;
             case R.id.pageFragment_deleteDiaryButton:
-                if(isCover){
+                netStat = NetworkStatus.getConnectivityStatus(getContext());
+                if(isCover && netStat == TYPE_CONNECTED){
+                    setViewWhenDeleting();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
                                     long diaryCreateTime = diaryModel.getCreateTime();
-                                    String title = diaryModel.getTitle();
 
-                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(title).delete()
+                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).delete()
                                             .addOnSuccessListener( aVoid -> {
                                                 dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).removeValue()
                                                         .addOnSuccessListener( aVoid1 -> {
+                                                            binding.pageFragmentProgressBar.setVisibility(View.INVISIBLE);
                                                             Toast.makeText(getContext(), getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
 
                                                             callback.finishDiaryActivity();
@@ -257,7 +279,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                             });
 
 
-                }else{
+                }else if(netStat == TYPE_CONNECTED){
+                    setViewWhenDeleting();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -275,6 +298,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                             .addOnSuccessListener(aVoid -> {
                                                 dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).removeValue()
                                                         .addOnSuccessListener(aVoid1 -> {
+                                                            binding.pageFragmentProgressBar.setVisibility(View.INVISIBLE);
                                                             Toast.makeText(getContext(), getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
 
                                                             callback.finishDiaryActivity();
@@ -287,7 +311,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                                 }
                             });
-                }
+                }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.pageFragment_editDiaryButton:
                 //diarykey 전달, 커버 이미지, 제목 수정
@@ -319,13 +343,21 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                     processLike(true);
                 }
                 break;
+            case R.id.pageFragment_imageView:
+            case R.id.pageFragment_label:
+                if(isMenuOpen)
+                    binding.pageFragmentSlideMenu.startAnimation(translateRight);
+                break;
         }
     }
 
     private void processLike(boolean like){
         Map<String, Object> map = new HashMap<>();
         map.put(uid, like);
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.like_users)).updateChildren(map);
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED)
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.like_users)).updateChildren(map);
+        else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void startWriteDiaryActivity(boolean isCover){

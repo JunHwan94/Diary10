@@ -1,9 +1,7 @@
 package com.polarstation.diary10.fragment;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,8 +16,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.DiaryActivity;
 import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
-import com.polarstation.diary10.databinding.FragmentMyDiariesBinding;
+import com.polarstation.diary10.databinding.FragmentDiariesBinding;
 import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,22 +37,25 @@ import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class DiariesFragment extends Fragment {
-    private FragmentMyDiariesBinding binding;
+    private FragmentDiariesBinding binding;
     private DiaryRecyclerViewAdapter adapter;
     private List<DiaryModel> diaryModelList;
     private String uid;
     private MainFragmentCallBack callback;
+    private FirebaseDatabase dbInstance;
     private String type;
+    private int netStat;
 
     public static final int SHOW_DIARY_CODE = 100;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_my_diaries, container, false);
-
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_diaries, container, false);
+        dbInstance = FirebaseDatabase.getInstance();
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         Bundle bundle = getArguments();
         if(bundle != null){
@@ -69,7 +71,7 @@ public class DiariesFragment extends Fragment {
         }
 
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
-        binding.myDiariesFragmentRecyclerView.setLayoutManager(layoutManager);
+        binding.diariesFragmentRecyclerView.setLayoutManager(layoutManager);
         adapter = new DiaryRecyclerViewAdapter();
         adapter.setOnItemClickListener((holder, view, position) -> {
             DiaryModel diaryModel = adapter.getItem(position);
@@ -81,55 +83,78 @@ public class DiariesFragment extends Fragment {
             intent.putExtra(DIARY_KEY_KEY, diaryModel.getKey());
             callback.getActivity().startActivityForResult(intent, SHOW_DIARY_CODE);
         });
-        binding.myDiariesFragmentRecyclerView.setAdapter(adapter);
+        binding.diariesFragmentRecyclerView.setAdapter(adapter);
 
         return binding.getRoot();
     }
 
+    private void setViewWhenLoading(){
+        binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void setViewWhenLoaded(){
+        binding.diariesFragmentProgressBar.setVisibility(View.INVISIBLE);
+    }
+
     private void loadMyDiaries(){
-        diaryModelList = new ArrayList<>();
-        FirebaseDatabase.getInstance().getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        diaryModelList.clear();
-                        for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                            diaryModelList.add(diaryModel);
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            setViewWhenLoading();
+
+            diaryModelList = new ArrayList<>();
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            diaryModelList.clear();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                diaryModelList.add(diaryModel);
+                            }
+                            adapter.addAll(diaryModelList);
+                            adapter.notifyDataSetChanged();
+
+                            setViewWhenLoaded();
                         }
-                        adapter.addAll(diaryModelList);
-                        adapter.notifyDataSetChanged();
-                    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
+                        }
+                    });
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void loadLikedDiaries(){
-        diaryModelList = new ArrayList<>();
-        FirebaseDatabase.getInstance().getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.like_users))
-        .addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                    DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                    Map<String, Boolean> map = diaryModel.getLikeUsers();
-                    if(map.keySet().contains(uid) && map.get(uid)){
-                        diaryModelList.add(diaryModel);
-                    }
-                    adapter.addAll(diaryModelList);
-                    adapter.notifyDataSetChanged();
-                }
-            }
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            setViewWhenLoading();
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+            diaryModelList = new ArrayList<>();
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.like_users))
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                Map<String, Boolean> map = diaryModel.getLikeUsers();
+                                if (map.keySet().contains(uid) && map.get(uid)) {
+                                    diaryModelList.add(diaryModel);
+                                }
+                            }
+                            adapter.addAll(diaryModelList);
+                            adapter.notifyDataSetChanged();
 
-            }
-        });
+                            setViewWhenLoaded();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+            setViewWhenLoaded();
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     @Override

@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -26,22 +27,18 @@ import com.polarstation.diary10.PhotoViewActivity;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentAccountBinding;
 import com.polarstation.diary10.model.UserModel;
-
-
-import java.util.ArrayList;
-import java.util.List;
+import com.polarstation.diary10.util.NetworkStatus;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import static com.polarstation.diary10.EditAccountActivity.COMMENT_KEY;
 import static com.polarstation.diary10.EditAccountActivity.NAME_KEY;
 import static com.polarstation.diary10.EditAccountActivity.URI_KEY;
 import static com.polarstation.diary10.MainActivity.USER_MODEL_KEY;
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
     private FirebaseDatabase dbInstance;
@@ -53,6 +50,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     private Animation translateLeft;
     private Animation translateRight;
     static boolean isMenuOpen = false;
+    private int netStat;
 
     public static final int PICK_FROM_ALBUM_CODE = 100;
     public static final int EDIT_COMPLETE_CODE = 101;
@@ -66,38 +64,42 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_account, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
-        dbInstance = FirebaseDatabase.getInstance();
-        authInstance = FirebaseAuth.getInstance();
 
-        if(!isChanged) {
-            Bundle bundle = getArguments();
-            setUserInfo(bundle);
-        }else{
-            String uid = authInstance.getCurrentUser().getUid();
-            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    UserModel userModel = dataSnapshot.getValue(UserModel.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable(USER_MODEL_KEY, userModel);
-                    setUserInfo(bundle);
-                }
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            dbInstance = FirebaseDatabase.getInstance();
+            authInstance = FirebaseAuth.getInstance();
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
+            if (!isChanged) {
+                Bundle bundle = getArguments();
+                setUserInfo(bundle);
+            } else {
+                String uid = authInstance.getCurrentUser().getUid();
+                dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        UserModel userModel = dataSnapshot.getValue(UserModel.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelable(USER_MODEL_KEY, userModel);
+                        setUserInfo(bundle);
+                    }
 
-                }
-            });
-        }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
 
-        binding.accountFragmentProfileImageView.setOnClickListener(this);
-        binding.accountFragmentEditButton.setOnClickListener(this);
-        binding.accountFragmentMenuButton.setOnClickListener(this);
-        binding.accountFragmentSignOutButton.setOnClickListener(this);
-        binding.accountFragmentLicenseGuideButton.setOnClickListener(this);
+                    }
+                });
+            }
 
-        setFragment();
-        setButtonAnimation();
+            binding.accountFragmentProfileImageView.setOnClickListener(this);
+            binding.accountFragmentEditButton.setOnClickListener(this);
+            binding.accountFragmentMenuButton.setOnClickListener(this);
+            binding.accountFragmentSignOutButton.setOnClickListener(this);
+            binding.accountFragmentLicenseGuideButton.setOnClickListener(this);
+
+            setFragment();
+            setButtonAnimation();
+        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
 
         return binding.getRoot();
     }
@@ -151,10 +153,13 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         UserModel userModel = bundle.getParcelable(USER_MODEL_KEY);
 
         imageUrl = userModel.getProfileImageUrl();
-        Glide.with(getContext())
-                .load(imageUrl)
-                .apply(new RequestOptions().circleCrop())
-                .into(binding.accountFragmentProfileImageView);
+        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        if(netStat == TYPE_CONNECTED) {
+            Glide.with(getContext())
+                    .load(imageUrl)
+                    .apply(new RequestOptions().circleCrop())
+                    .into(binding.accountFragmentProfileImageView);
+        }else Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
 
         String userName = userModel.getUserName();
         binding.accountFragmentNameTextView.setText(userName);
@@ -251,7 +256,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onResume() {
         super.onResume();
-        callback.cancelDialog();
+        //
     }
 
     public static class SlidingAnimationListener implements Animation.AnimationListener{
@@ -272,32 +277,6 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         @Override
         public void onAnimationRepeat(Animation animation) {
 
-        }
-    }
-
-    public static class ListPagerAdapter extends FragmentStatePagerAdapter {
-        List<Fragment> fragmentList = new ArrayList<>();
-
-        public ListPagerAdapter(FragmentManager fm){
-            super(fm);
-        }
-
-        public void addItem(Fragment fragment){
-            fragmentList.add(fragment);
-        }
-
-        void clear(){
-            fragmentList.clear();
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return fragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return fragmentList.size();
         }
     }
 }

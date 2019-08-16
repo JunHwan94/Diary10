@@ -24,9 +24,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding;
-import com.polarstation.diary10.fragment.PageFragmentCallback;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
+import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ import static com.polarstation.diary10.fragment.PageFragment.EDIT_DIARY_CODE;
 import static com.polarstation.diary10.fragment.PageFragment.IS_NEW_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.PAGE_CREATE_TIME_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.PAGE_KEY_KEY;
-import static com.polarstation.diary10.util.DialogUtils.showProgressDialog;
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class WriteDiaryActivity extends BaseActivity implements View.OnClickListener{
     private ActivityWriteDiaryBinding binding;
@@ -54,10 +54,10 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     private boolean isImageChanged;
     private String uid;
     private String title;
-    private String content;
     private long diaryCreateTime;
     private long pageCreateTime;
     private boolean isNew;
+    private int netStat;
 
     private static final int PICK_FROM_ALBUM_CODE = 100;
 
@@ -90,23 +90,24 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
         diaryKey = intent.getStringExtra(DIARY_KEY_KEY);
         String imageUrl = intent.getStringExtra(IMAGE_URL_KEY);
         title = intent.getStringExtra(TITLE_KEY);
-        content = intent.getStringExtra(CONTENT_KEY);
         pageKey = intent.getStringExtra(PAGE_KEY_KEY);
         isNew = intent.getBooleanExtra(IS_NEW_KEY, false);
         pageCreateTime = intent.getLongExtra(PAGE_CREATE_TIME_KEY, 0);
+
+        binding.writeActivityTitleTextView.setText(title);
         if(isNew){
             binding.writeActivityGuideImageView.setVisibility(View.VISIBLE);
             binding.writeActivityGuideTextView.setVisibility(View.VISIBLE);
+            binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
         }else if(isCover){
             binding.writeActivityTitleTextView.setVisibility(View.INVISIBLE);
             binding.writeActivitySwitch.setVisibility(View.VISIBLE);
             binding.writeActivityEditText.setText(title);
             binding.writeActivityEditText.setHint(R.string.write_title);
-            binding.writeActivityEditText.setMaxEms(15);
         }else{
             String content = intent.getStringExtra(CONTENT_KEY);
             binding.writeActivityEditText.setText(content);
-            binding.writeActivityTitleTextView.setText(title);
+            binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
             try{
                 if(imageUrl.equals(null));
             }catch(Exception e){
@@ -143,9 +144,9 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 }else if(isCover){
                     if(String.valueOf(binding.writeActivityEditText.getText()).equals("")){
                         Toast.makeText(this, getString(R.string.write_title), Toast.LENGTH_SHORT).show();
-                    }else if(isImageChanged)
+                    }else /*if(isImageChanged)*/
                         update(text);
-                    else updateDatabase(text);
+//                    else updateDatabase(text);
                 }else
                     update(text);
 
@@ -153,28 +154,43 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
         }
     }
 
+    private void setViewWhenUploading(){
+        binding.writeDiaryActivityProgressLayout.setVisibility(View.VISIBLE);
+        binding.writeActivityChildConstraintLayout.setEnabled(false);
+        binding.writeActivityCoverImageView.setEnabled(false);
+        binding.writeActivityEditText.setEnabled(false);
+        binding.writeActivitySwitch.setEnabled(false);
+        binding.writeActivitySaveButton.setEnabled(false);
+        binding.writeActivityCancelButton.setEnabled(false);
+    }
+
     private void update(String text){
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
-                        diaryCreateTime = diaryModel.getCreateTime();
-                        if(isImageChanged) {
-                            uploadImage(text);
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                            diaryCreateTime = diaryModel.getCreateTime();
+                            if (isImageChanged) {
+                                uploadImage(text);
+                            }
+                            updateDatabase(text);
                         }
-                        updateDatabase(text);
-                    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
+                        }
+                    });
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void uploadImage(String text){
-        if(isNew) {
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(isNew && netStat == TYPE_CONNECTED) {
+            setViewWhenUploading();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -200,10 +216,11 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
 
                         }
                     });
-        }else if(isCover){
-            strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(text).putFile(imageUri)
+        }else if(isCover && netStat == TYPE_CONNECTED){
+            setViewWhenUploading();
+            strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).putFile(imageUri)
                     .addOnCompleteListener(task -> {
-                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(text).getDownloadUrl()
+                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).getDownloadUrl()
                                 .addOnSuccessListener( uri -> {
                                     String imageUrl = String.valueOf(uri);
                                     Map<String, Object> map = new HashMap<>();
@@ -212,7 +229,8 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                 });
                         updateDatabase(text);
                     });
-        }else{
+        }else if(netStat == TYPE_CONNECTED){
+            setViewWhenUploading();
             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).putFile(imageUri)
                     .addOnCompleteListener(task -> {
                         strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).getDownloadUrl()
@@ -224,7 +242,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                 });
                         updateDatabase(text);
                     });
-        }
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void pushPage(String content, long timeStamp, String imageUrl){
@@ -235,61 +253,65 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                         .setImageUrl(imageUrl)
                         .build();
 
-        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).push().setValue(pageModel)
-                .addOnSuccessListener( aVoid -> {
-                    // 저장 후 PageModel key값 바로 업데이트하기
-                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).orderByChild(getString(R.string.fdb_createTime)).equalTo(timeStamp)
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    String pageKey = null;
-                                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                                        PageModel pageModel = snapshot.getValue(PageModel.class);
-                                        if(pageModel.getContent().equals(content))
-                                            pageKey = snapshot.getKey();
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).push().setValue(pageModel)
+                    .addOnSuccessListener(aVoid -> {
+                        // 저장 후 PageModel key값 바로 업데이트하기
+                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).orderByChild(getString(R.string.fdb_createTime)).equalTo(timeStamp)
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        String pageKey = null;
+                                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                            PageModel pageModel = snapshot.getValue(PageModel.class);
+                                            if (pageModel.getContent().equals(content))
+                                                pageKey = snapshot.getKey();
+                                        }
+//                                        Log.d("pageKey", pageKey);
+                                        Map<String, Object> map = new HashMap<>();
+                                        map.put(getString(R.string.fdb_key), pageKey);
+                                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
+                                                .addOnSuccessListener(aVoid1 -> {
+                                                    finishWriteDiaryActivity();
+                                                });
                                     }
 
-                                    Log.d("pageKey", pageKey);
-                                    Map<String, Object> map = new HashMap<>();
-                                    map.put(getString(R.string.fdb_key), pageKey);
-                                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
-                                            .addOnSuccessListener(aVoid1 -> {
-                                                finishWriteDiaryActivity();
-                                            });
-                                }
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
-
-                });
+                                    }
+                                });
+                    });
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void updateDatabase(String text){
-        Map<String, Object> map = new HashMap<>();
-        if(isCover) {
-            String title = text;
-            map.put(getString(R.string.fdb_title), title);
-            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(map)
-                    .addOnSuccessListener( aVoid -> {
-                        Map<String, Boolean> booleanMap = new HashMap<>();
-                        boolean isPrivate = binding.writeActivitySwitch.isChecked();
-                        booleanMap.put(getString(R.string.fdb_private), isPrivate);
-                        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(map)
-                                .addOnSuccessListener( aVoid1 -> {
-                                    finishWriteDiaryActivity();
-                                });
-                    });
-        }else{
-            String content = text;
-            map.put(getString(R.string.fdb_content), content);
-            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
-                    .addOnSuccessListener( aVoid -> {
-                        finishWriteDiaryActivity();
-                    });
-        }
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            Map<String, Object> map = new HashMap<>();
+            if (isCover) {
+                String title = text;
+                map.put(getString(R.string.fdb_title), title);
+                dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(map)
+                        .addOnSuccessListener(aVoid -> {
+                            Map<String, Object> booleanMap = new HashMap<>();
+                            boolean isPrivate = binding.writeActivitySwitch.isChecked();
+                            booleanMap.put(getString(R.string.fdb_private), isPrivate);
+                            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(booleanMap)
+                                    .addOnSuccessListener(aVoid1 -> {
+                                        finishWriteDiaryActivity();
+                                    });
+                        });
+            } else {
+                String content = text;
+                map.put(getString(R.string.fdb_content), content);
+                dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
+                        .addOnSuccessListener(aVoid -> {
+                            finishWriteDiaryActivity();
+                        });
+            }
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void finishWriteDiaryActivity(){

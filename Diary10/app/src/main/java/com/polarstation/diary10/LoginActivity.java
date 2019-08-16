@@ -26,6 +26,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthCredential;
@@ -39,6 +40,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.databinding.ActivityLoginBinding;
 import com.polarstation.diary10.model.UserModel;
+import com.polarstation.diary10.util.NetworkStatus;
+
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class LoginActivity extends BaseActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
     private ActivityLoginBinding binding;
@@ -46,6 +50,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private FirebaseAuth.AuthStateListener authStateListener;
     private FirebaseDatabase dbInstance;
     private String uid;
+    private int netStat;
 
     private CallbackManager callbackManager;
 
@@ -54,30 +59,34 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FirebaseApp.initializeApp(this);
-        dbInstance = FirebaseDatabase.getInstance();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_login);
 
-        authInstance = FirebaseAuth.getInstance();
-        authStateListener = (FirebaseAuth firebaseAuth) -> {
-            FirebaseUser user = firebaseAuth.getCurrentUser();
-            if (user != null) {
-                //로그인
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                finish();
-            } else {
-                //로그아웃
-                firebaseAuth.signOut();
-            }
-        };
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            FirebaseApp.initializeApp(this);
+            dbInstance = FirebaseDatabase.getInstance();
+            authInstance = FirebaseAuth.getInstance();
+            authStateListener = (FirebaseAuth firebaseAuth) -> {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    //로그인
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    //로그아웃
+                    firebaseAuth.signOut();
+                    authInstance.removeAuthStateListener(authStateListener);
+                }
+            };
 
-        binding.loginActivityGoogleLoginButton.setOnClickListener(this);
-        setFacebookLogIn();
+            binding.loginActivityGoogleLoginButton.setOnClickListener(this);
+            setFacebookLogIn();
 
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},  1);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -96,81 +105,98 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     }
 
     private void googleSignIn(){
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build();
-        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build();
+            GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        Intent intent = googleSignInClient.getSignInIntent();
-        startActivityForResult(intent, SIGN_IN_REQUEST_CODE);
+            Intent intent = googleSignInClient.getSignInIntent();
+            startActivityForResult(intent, SIGN_IN_REQUEST_CODE);
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount account){
-        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
-        String userName = account.getDisplayName();
-        String profileImageUrl = String.valueOf(account.getPhotoUrl());
-        processCredential(credential, userName, profileImageUrl);
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+            String userName = account.getDisplayName();
+            String profileImageUrl = String.valueOf(account.getPhotoUrl());
+            processCredential(credential, userName, profileImageUrl);
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void setFacebookLogIn(){
-        // 페이스북 로그인
-        callbackManager = CallbackManager.Factory.create();
-        binding.loginActivityFacebookLoginButton.setReadPermissions(getString(R.string.email));
-        binding.loginActivityFacebookLoginButton.setLoginText(getString(R.string.log_in));
-        binding.loginActivityFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-                handleFacebookAccessToken(loginResult.getAccessToken());
-            }
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            // 페이스북 로그인
+            callbackManager = CallbackManager.Factory.create();
+            binding.loginActivityFacebookLoginButton.setReadPermissions(getString(R.string.email));
+            binding.loginActivityFacebookLoginButton.setLoginText(getString(R.string.log_in));
+            binding.loginActivityFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                @Override
+                public void onSuccess(LoginResult loginResult) {
+                    handleFacebookAccessToken(loginResult.getAccessToken());
+                }
 
-            @Override
-            public void onCancel() {
+                @Override
+                public void onCancel() {
 
-            }
+                }
 
-            @Override
-            public void onError(FacebookException error) {
-//                Toast.makeText(getBaseContext(), "코드 : " + error.toString(), Toast.LENGTH_LONG).show();
-                Log.w("LoginActivity", error.toString());
-            }
-        });
+                @Override
+                public void onError(FacebookException error) {
+    //                Toast.makeText(getBaseContext(), "코드 : " + error.toString(), Toast.LENGTH_LONG).show();
+                    Log.w("LoginActivity", error.toString());
+                }
+            });
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void handleFacebookAccessToken(AccessToken token){
-        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
-        String name = Profile.getCurrentProfile().getName();
-        String profileImageUrl = String.valueOf(Profile.getCurrentProfile().getProfilePictureUri(200,200));
-        processCredential(credential, name, profileImageUrl);
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+            String name = Profile.getCurrentProfile().getName();
+            String profileImageUrl = String.valueOf(Profile.getCurrentProfile().getProfilePictureUri(200,200));
+            processCredential(credential, name, profileImageUrl);
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void processCredential(AuthCredential credential, String userName, String profileImageUrl){
-        authInstance.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(this, R.string.auth_success, Toast.LENGTH_SHORT).show();
-                        checkUid(userName, profileImageUrl);
-                    } else {
-                        Toast.makeText(this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
-                    }
-                });
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            authInstance.signInWithCredential(credential)
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+                            checkUid(userName, profileImageUrl);
+                        } else {
+                            Toast.makeText(this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void checkUid(String userName, String profileImageUrl){
-        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        dbInstance.getReference().child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if(dataSnapshot.getChildrenCount() == 0)
-                            addUserToFDB(userName, profileImageUrl);
-                    }
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED) {
+            uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            dbInstance.getReference().child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.getChildrenCount() == 0)
+                                addUserToFDB(userName, profileImageUrl);
+                        }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-        });
+                        }
+            });
+        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void addUserToFDB(String userName, String profileImageUrl){
@@ -179,7 +205,16 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                 .setProfileImageUrl(profileImageUrl)
                 .setUid(uid)
                 .build();
-        dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).setValue(userModel);
+        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+        if(netStat == TYPE_CONNECTED){
+            binding.loginActivityProgressBar.setVisibility(View.VISIBLE);
+            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).setValue(userModel)
+                    .addOnSuccessListener( aVoid -> {
+                        authInstance.addAuthStateListener(authStateListener);
+                        Toast.makeText(this, R.string.auth_success, Toast.LENGTH_SHORT).show();
+                    }
+            );
+        } else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     @Override

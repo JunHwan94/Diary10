@@ -6,6 +6,8 @@ public interface MainFragmentCallBack {
     void findMyDiary();
     void replaceFragment(int type);
     void quitApp();
-    void cancelDialog();
     Activity getActivity();
+    void startProgressBar();
+    void stopProgressBar();
+    void setNavigationViewDisabled();
 }
