@@ -21,6 +21,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.polarstation.diary10.BaseActivity;
 import com.polarstation.diary10.DiaryActivity;
 import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
@@ -51,6 +52,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater,R.layout.fragment_list, container, false);
+        BaseActivity.setGlobalFont(binding.getRoot());
 
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {

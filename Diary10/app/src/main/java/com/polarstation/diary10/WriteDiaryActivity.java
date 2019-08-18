@@ -6,12 +6,10 @@ import androidx.databinding.DataBindingUtil;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -173,10 +171,10 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
                             diaryCreateTime = diaryModel.getCreateTime();
-                            if (isImageChanged) {
+                            if (isImageChanged)
                                 uploadImage(text);
-                            }
-                            updateDatabase(text);
+                            else
+                                updateDatabase(text);
                         }
 
                         @Override
@@ -226,8 +224,9 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                     Map<String, Object> map = new HashMap<>();
                                     map.put(getString(R.string.fdb_cover_image_url), imageUrl);
                                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(map);
+                                    updateDatabase(text);
                                 });
-                        updateDatabase(text);
+
                     });
         }else if(netStat == TYPE_CONNECTED){
             setViewWhenUploading();
@@ -239,8 +238,8 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                     Map<String, Object> map = new HashMap<>();
                                     map.put(getString(R.string.fdb_image_url), imageUrl);
                                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map);
+                                    updateDatabase(text);
                                 });
-                        updateDatabase(text);
                     });
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
@@ -273,7 +272,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         map.put(getString(R.string.fdb_key), pageKey);
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                                                 .addOnSuccessListener(aVoid1 -> {
-                                                    finishWriteDiaryActivity();
+                                                    finishWithEditResult();
                                                 });
                                     }
 
@@ -300,7 +299,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                             booleanMap.put(getString(R.string.fdb_private), isPrivate);
                             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(booleanMap)
                                     .addOnSuccessListener(aVoid1 -> {
-                                        finishWriteDiaryActivity();
+                                        finishWithEditResult();
                                     });
                         });
             } else {
@@ -308,13 +307,13 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 map.put(getString(R.string.fdb_content), content);
                 dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                         .addOnSuccessListener(aVoid -> {
-                            finishWriteDiaryActivity();
+                            finishWithEditResult();
                         });
             }
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
-    private void finishWriteDiaryActivity(){
+    private void finishWithEditResult(){
         Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
         Intent intent = new Intent();
         setResult(EDIT_DIARY_CODE, intent);

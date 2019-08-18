@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Diary 10</string>
+    <string name="app_name">Diary 18</string>
     <string name="log_in">Sign in</string>
     <string name="sign_up">Sign up</string>
     <string name="log_in_please">Sign in</string>
     <string name="secret_diary">Make secret</string>
     <string name="select_cover">Choose cover</string>
-    <string name="select_image">Choose today\'s image</string>
+    <string name="select_image">Choose today\'s picture</string>
     <string name="time_zone">America/NewYork</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
@@ -38,7 +38,7 @@
     <string name="font_license_5">"Images of printed materials and advertisements (including online) using S-core fonts can be used for the promotion of S-Core. If you do not want to do this, you can ask us at any time. "</string>
     <string name="fdb_content">content</string>
     <string name="diaries">Diaries</string>
-    <string name="date_format">M d, yyyy</string>
+    <string name="date_format">M - d, yyyy</string>
     <string name="delete_diary">Delete diary</string>
     <string name="edit_diary">Edit cover</string>
     <string name="delete_page">Delete page</string>
@@ -46,10 +46,12 @@
     <string name="new_page">Write</string>
     <string name="delete_success">Delete success</string>
     <string name="search">Search</string>
-    <string name="select_new_image">Select new image</string>
+    <string name="select_new_image">Select new picture</string>
     <string name="no_result">No result</string>
-    <string name="liked_diaries">Lke</string>
+    <string name="liked_diaries">Like</string>
     <string name="network_not_connected">Request failed. Check internet connection.</string>
     <string name="network_not_connected_quit">Not connected to Internet. Quit the app</string>
     <string name="image_load_failed">Image load failed. Check internet connection</string>
+    <string name="splash_text">D i a r y\n1 8</string>
+    <string name="splash_text_guide">Record 18 characters a day</string>
 </resources>

@@ -3,6 +3,7 @@ package com.polarstation.diary10.fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -15,7 +16,11 @@ import android.view.animation.AnimationUtils;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -44,6 +49,7 @@ import androidx.fragment.app.Fragment;
 
 import static com.polarstation.diary10.DiaryActivity.IS_COVER_KEY;
 import static com.polarstation.diary10.DiaryActivity.PAGE_MODEL_KEY;
+import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
 import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
@@ -145,10 +151,9 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
     private void processBundle(Bundle bundle){
         isCover = bundle.getBoolean(IS_COVER_KEY);
+        setViewWhenRequesting();
         if(isCover){
             binding.pageFragmentDateTextView.setVisibility(View.INVISIBLE);
-            binding.pageFragmentWriterImageView.setVisibility(View.VISIBLE);
-            binding.pageFragmentWriterTextView.setVisibility(View.VISIBLE);
             binding.pageFragmentContentTextView.setTypeface(Typeface.createFromAsset(getContext().getAssets(), "fonts/scdream4.otf"));
             binding.pageFragmentWritePageButton.setVisibility(View.VISIBLE);
 
@@ -168,14 +173,25 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                                 String writerImageUrl = userModel.getProfileImageUrl();
                                 binding.pageFragmentWriterTextView.setText(writer);
-                                try {
-                                    Glide.with(getContext())
-                                            .load(writerImageUrl)
-                                            .apply(new RequestOptions().circleCrop())
-                                            .into(binding.pageFragmentWriterImageView);
-                                } catch (Exception e) {
-                                    Toast.makeText(getContext(), "다시 시도해주세요", Toast.LENGTH_SHORT).show();
-                                }
+
+                                Glide.with(getContext())
+                                        .load(writerImageUrl)
+                                        .apply(new RequestOptions().circleCrop())
+                                        .listener(new RequestListener<Drawable>() {
+                                            @Override
+                                            public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                                Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
+                                                return false;
+                                            }
+
+                                            @Override
+                                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                                binding.pageFragmentWriterImageView.setVisibility(View.VISIBLE);
+                                                binding.pageFragmentWriterTextView.setVisibility(View.VISIBLE);
+                                                return false;
+                                            }
+                                        })
+                                        .into(binding.pageFragmentWriterImageView);
 
                                 binding.pageFragmentContentTextView.setText(title);
                             }
@@ -190,6 +206,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         }else{
             PageModel pageModel = bundle.getParcelable(PAGE_MODEL_KEY);
             content = pageModel.getContent();
+            Log.d("PageFragment", "create view : " + content);
             pageCreateTime = pageModel.getCreateTime();
             imageUrl = pageModel.getImageUrl();
             pageKey = pageModel.getKey();
@@ -201,7 +218,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             Date date = new Date(pageCreateTime);
 
             binding.pageFragmentContentTextView.setTextSize(22.0f);
-            binding.pageFragmentContentTextView.setText(content);
+            binding.pageFragmentContentTextView.setText("\n" + content);
             binding.pageFragmentDateTextView.setText(sdf.format(date));
 
             binding.pageFragmentDeleteDiaryButton.setText(getString(R.string.delete_page));
@@ -213,6 +230,20 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         Glide.with(getContext())
                 .load(imageUrl)
                 .apply(new RequestOptions().centerCrop())
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
+                        setViewWhenDone();
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        setViewWhenDone();
+                        return false;
+                    }
+                })
                 .into(binding.pageFragmentImageView);
     }
 
@@ -233,9 +264,14 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         return metrics;
     }
 
-    private void setViewWhenDeleting(){
+    private void setViewWhenRequesting(){
         binding.pageFragmentProgressLayout.setVisibility(View.VISIBLE);
         binding.pageFragmentMenuButton.setEnabled(false);
+    }
+
+    private void setViewWhenDone(){
+        binding.pageFragmentProgressLayout.setVisibility(View.INVISIBLE);
+        binding.pageFragmentMenuButton.setEnabled(true);
     }
 
     @Override
@@ -252,7 +288,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             case R.id.pageFragment_deleteDiaryButton:
                 netStat = NetworkStatus.getConnectivityStatus(getContext());
                 if(isCover && netStat == TYPE_CONNECTED){
-                    setViewWhenDeleting();
+                    setViewWhenRequesting();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -280,7 +316,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
 
                 }else if(netStat == TYPE_CONNECTED){
-                    setViewWhenDeleting();
+                    setViewWhenRequesting();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -335,13 +371,17 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 }
                 break;
             case R.id.pageFragment_likeButton:
-                if(view.isSelected()){
-                    view.setSelected(false);
-                    processLike(false);
-                }else{
-                    view.setSelected(true);
-                    processLike(true);
-                }
+                callback.likeChanges();
+                boolean likeOrNot = view.isSelected();
+                view.setSelected(!likeOrNot);
+                processLike(!likeOrNot);
+//                if(view.isSelected()){
+//                    view.setSelected(false);
+//                    processLike(false);
+//                }else{
+//                    view.setSelected(true);
+//                    processLike(true);
+//                }
                 break;
             case R.id.pageFragment_imageView:
             case R.id.pageFragment_label:
@@ -356,7 +396,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         map.put(uid, like);
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED)
-            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.like_users)).updateChildren(map);
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_like_users)).updateChildren(map);
         else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 

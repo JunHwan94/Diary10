@@ -38,6 +38,7 @@ import static com.polarstation.diary10.EditAccountActivity.COMMENT_KEY;
 import static com.polarstation.diary10.EditAccountActivity.NAME_KEY;
 import static com.polarstation.diary10.EditAccountActivity.URI_KEY;
 import static com.polarstation.diary10.MainActivity.USER_MODEL_KEY;
+import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
@@ -104,7 +105,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         return binding.getRoot();
     }
 
-    private void setFragment(){
+    public void setFragment(){
         Bundle bundle = new Bundle();
         DiariesFragment myDiariesFragment = new DiariesFragment();
         bundle.putString(FRAGMENT_TYPE_KEY, MY_DIARY);

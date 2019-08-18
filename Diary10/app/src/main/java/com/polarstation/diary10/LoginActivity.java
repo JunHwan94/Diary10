@@ -77,7 +77,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                 } else {
                     //로그아웃
                     firebaseAuth.signOut();
-                    authInstance.removeAuthStateListener(authStateListener);
+//                    authInstance.removeAuthStateListener(authStateListener);
                 }
             };
 

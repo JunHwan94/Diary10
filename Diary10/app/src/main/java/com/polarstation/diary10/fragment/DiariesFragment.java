@@ -1,5 +1,6 @@
 package com.polarstation.diary10.fragment;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -60,14 +61,7 @@ public class DiariesFragment extends Fragment {
         Bundle bundle = getArguments();
         if(bundle != null){
             type = bundle.getString(FRAGMENT_TYPE_KEY);
-            switch (type){
-                case MY_DIARY:
-                    loadMyDiaries();
-                    break;
-                case LIKED_DIARY:
-                    loadLikedDiaries();
-                    break;
-            }
+            loadDiariesOfType(type);
         }
 
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
@@ -81,25 +75,28 @@ public class DiariesFragment extends Fragment {
             intent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
             intent.putExtra(IMAGE_URL_KEY, diaryModel.getCoverImageUrl());
             intent.putExtra(DIARY_KEY_KEY, diaryModel.getKey());
-            callback.getActivity().startActivityForResult(intent, SHOW_DIARY_CODE);
+            startActivityForResult(intent, SHOW_DIARY_CODE);
         });
         binding.diariesFragmentRecyclerView.setAdapter(adapter);
 
         return binding.getRoot();
     }
 
-    private void setViewWhenLoading(){
-        binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
-    }
-
-    private void setViewWhenLoaded(){
-        binding.diariesFragmentProgressBar.setVisibility(View.INVISIBLE);
+    private void loadDiariesOfType(String type){
+        switch (type){
+            case MY_DIARY:
+                loadMyDiaries();
+                break;
+            case LIKED_DIARY:
+                loadLikedDiaries();
+                break;
+        }
     }
 
     private void loadMyDiaries(){
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {
-            setViewWhenLoading();
+            binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
 
             diaryModelList = new ArrayList<>();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
@@ -114,7 +111,7 @@ public class DiariesFragment extends Fragment {
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 
-                            setViewWhenLoaded();
+                            binding.diariesFragmentProgressBar.setVisibility(View.INVISIBLE);
                         }
 
                         @Override
@@ -128,10 +125,10 @@ public class DiariesFragment extends Fragment {
     private void loadLikedDiaries(){
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {
-            setViewWhenLoading();
+            binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
 
             diaryModelList = new ArrayList<>();
-            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.like_users))
+            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_like_users))
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -145,7 +142,7 @@ public class DiariesFragment extends Fragment {
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 
-                            setViewWhenLoaded();
+                            binding.diariesFragmentProgressBar.setVisibility(View.INVISIBLE);
                         }
 
                         @Override
@@ -153,8 +150,14 @@ public class DiariesFragment extends Fragment {
 
                         }
                     });
-            setViewWhenLoaded();
         }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == SHOW_DIARY_CODE && resultCode == Activity.RESULT_OK){
+            loadDiariesOfType(type);
+        }
     }
 
     @Override

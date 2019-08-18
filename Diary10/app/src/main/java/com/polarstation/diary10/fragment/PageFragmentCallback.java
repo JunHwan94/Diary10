@@ -6,4 +6,5 @@ public interface PageFragmentCallback {
     void loadDiary(String key);
     void finishDiaryActivity();
     Activity getActivity();
+    void likeChanges();
 }

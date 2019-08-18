@@ -7,11 +7,16 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -48,7 +53,7 @@ import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class WriteFragment extends Fragment implements View.OnClickListener{
-    private FragmentWriteBinding binding;
+    private static FragmentWriteBinding binding;
     private FirebaseStorage strInstance;
     private FirebaseDatabase dbInstance;
     private String imageUrl;
@@ -72,9 +77,12 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         BaseActivity.setGlobalFont(binding.getRoot());
 
         netStat = NetworkStatus.getConnectivityStatus(getContext());
+        binding.writeFragmentEditText.setText("");
+
         if(netStat == TYPE_CONNECTED) {
             strInstance = FirebaseStorage.getInstance();
             dbInstance = FirebaseDatabase.getInstance();
+            uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
             bundle = getArguments();
             type = NEW_DIARY_TYPE;
@@ -93,8 +101,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
                 setUI(type);
             }
-
-            uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
             binding.writeFragmentChildConstraintLayout.setOnClickListener(this);
             setSaveButtonListener();
@@ -118,6 +124,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 binding.writeFragmentSwitch.setVisibility(View.VISIBLE);
                 binding.writeFragmentGuideTextView.setText(R.string.select_cover);
                 binding.writeFragmentEditText.setHint(R.string.write_title);
+                binding.writeFragmentEditText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                 break;
             case NEW_PAGE_TYPE:
                 List<String> diaryTitleList = bundle.getStringArrayList(LIST_KEY);
