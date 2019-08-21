@@ -5,7 +5,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".PhotoViewActivity">
+        tools:context=".activity.PhotoViewActivity">
         <com.github.chrisbanes.photoview.PhotoView
             android:id="@+id/photoViewActivity_photoView"
             android:layout_width="match_parent"

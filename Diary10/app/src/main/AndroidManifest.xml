@@ -10,18 +10,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".WriterAccountActivity"></activity>
-        <activity android:name=".WriteDiaryActivity" />
+        <activity android:name=".activity.WriterAccountActivity"></activity>
+        <activity android:name=".activity.WriteDiaryActivity" />
         <activity
-            android:name=".DiaryActivity"
+            android:name=".activity.DiaryActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".PhotoViewActivity" />
-        <activity android:name=".EditAccountActivity" />
+        <activity android:name=".activity.PhotoViewActivity" />
+        <activity android:name=".activity.EditAccountActivity" />
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".SplashActivity"
+            android:name=".activity.SplashActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,7 +30,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
+            android:name=".activity.LoginActivity"
             android:screenOrientation="portrait" />
 
         <meta-data

@@ -1,4 +1,4 @@
-package com.polarstation.diary10;
+package com.polarstation.diary10.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.polarstation.diary10.DiaryRecyclerViewAdapter;
+import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityWriterAccountBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.UserModel;

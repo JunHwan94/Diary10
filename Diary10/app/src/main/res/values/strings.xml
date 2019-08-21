@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Diary 18</string>
-    <string name="splash_text">D i a r y\n1 8</string>
+    <string name="app_name">오늘어때</string>
+    <string name="splash_text">오늘\n어때</string>
+    <string name="splash_text_guide">하루 한 줄 간단하게 기록하세요</string>
     <string name="log_in">로그인</string>
     <string name="sign_up">회원가입</string>
     <string name="log_in_please">로그인 하세요</string>
@@ -10,7 +11,6 @@
     <string name="cancel">취소</string>
     <string name="confirm">확인</string>
     <string name="save">저장</string>
-    <string name="time_zone">Asia/Seoul</string>
     <string name="my_diaries">내 일기장</string>
     <string name="loading_data">데이터를 불러오는 중입니다..</string>
     <string name="uploading">업로드 중입니다..</string>
@@ -21,6 +21,7 @@
     <string name="diaries">일기장</string>
     <string name="no_result">검색 결과가 없습니다</string>
     <string name="liked_diaries">좋아하는 일기장</string>
+    <string name="font_license">글꼴 라이센스</string>
 
     <string name="delete_diary">일기장 삭제</string>
     <string name="edit_diary">표지 수정</string>
@@ -71,14 +72,8 @@
     <string name="fdb_image_url" translatable="false">imageUrl</string>
     <string name="fdb_like_users" translatable="false">likeUsers</string>
 
-    <string name="font_license">글꼴 라이센스</string>
-    <string name="font_license_title">에스코어 글꼴 라이선스</string>
-    <string name="font_license_1">S-Core 홈페이지를 통해 배포되는 에스코어 글꼴의 지적 재산권은 S-Core에 있습니다.</string>
-    <string name="font_license_2">에스코어 글꼴은 개인 및 기업 사용자를 포함한 모든 사용자에게 무료로 제공되며 자유롭게 재배포 하실 수 있습니다.</string>
-    <string name="font_license_3">에스코어 글꼴은 어떠한 이유로도 지적 재산권 이외의 사용자가 수정, 판매할 수 없으며 배포되는 형태 그대로 사용해야 합니다.</string>
-    <string name="font_license_4">에스코어 글꼴은 본 저작권 안내를 포함해서 다른 소프트웨어와 번들하거나 재배포 또는 판매가 가능합니다. 에스코어 글꼴 저작권 안내를 포함하기 어려울 경우, 에스코어 글꼴의 출처 표기를 권장합니다.</string>
-    <string name="font_license_5">에스코어 글꼴을 사용한 인쇄물, 광고물(온라인 포함)의 이미지는 S-Core의 프로모션을 위해 활용될 수 있습니다. 이를 원치 않을 경우, 언제든지 당사에 요청하실 수 있습니다.</string>
-
     <string name="date_format">yyyy년 M월 d일</string>
-    <string name="splash_text_guide">하루를 18자로 기록하세요</string>
+
+    <string name="admob_app_id" translatable="false">ca-app-pub-4270520106393473~2766393943</string>
+    <string name="edit_complete">수정 완료</string>
 </resources>

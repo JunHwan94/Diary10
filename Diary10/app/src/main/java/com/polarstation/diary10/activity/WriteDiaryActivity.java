@@ -1,4 +1,4 @@
-package com.polarstation.diary10;
+package com.polarstation.diary10.activity;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,6 +21,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
@@ -30,7 +31,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.polarstation.diary10.DiaryActivity.IS_COVER_KEY;
+import static com.polarstation.diary10.activity.DiaryActivity.IS_COVER_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
@@ -142,9 +143,8 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 }else if(isCover){
                     if(String.valueOf(binding.writeActivityEditText.getText()).equals("")){
                         Toast.makeText(this, getString(R.string.write_title), Toast.LENGTH_SHORT).show();
-                    }else /*if(isImageChanged)*/
+                    }else
                         update(text);
-//                    else updateDatabase(text);
                 }else
                     update(text);
 
@@ -272,6 +272,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         map.put(getString(R.string.fdb_key), pageKey);
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                                                 .addOnSuccessListener(aVoid1 -> {
+                                                    Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
                                                     finishWithEditResult();
                                                 });
                                     }
@@ -299,6 +300,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                             booleanMap.put(getString(R.string.fdb_private), isPrivate);
                             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(booleanMap)
                                     .addOnSuccessListener(aVoid1 -> {
+                                        Toast.makeText(getBaseContext(), getString(R.string.edit_complete), Toast.LENGTH_SHORT).show();
                                         finishWithEditResult();
                                     });
                         });
@@ -307,6 +309,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 map.put(getString(R.string.fdb_content), content);
                 dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                         .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(getBaseContext(), getString(R.string.edit_complete), Toast.LENGTH_SHORT).show();
                             finishWithEditResult();
                         });
             }
@@ -314,7 +317,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     }
 
     private void finishWithEditResult(){
-        Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
         Intent intent = new Intent();
         setResult(EDIT_DIARY_CODE, intent);
         setResult(RESULT_OK, intent);

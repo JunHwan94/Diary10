@@ -1,4 +1,4 @@
-package com.polarstation.diary10;
+package com.polarstation.diary10.activity;
 
 import android.graphics.Typeface;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,7 +16,7 @@ public class BaseActivity extends AppCompatActivity{
     public void setContentView(int layoutResID) {
         super.setContentView(layoutResID);
         if(typeface == null){
-            typeface = Typeface.createFromAsset(this.getAssets(), "fonts/scdream3.otf");
+            typeface = Typeface.createFromAsset(this.getAssets(), "fonts/JalnanOTF.otf");
         }
 
         setGlobalFont(getWindow().getDecorView());

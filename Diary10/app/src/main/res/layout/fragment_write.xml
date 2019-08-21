@@ -74,7 +74,7 @@
             android:layout_marginEnd="20dp"
             android:ems="10"
             android:hint="@string/write_content"
-            android:maxLength="18"
+            android:maxLength="17"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.789"

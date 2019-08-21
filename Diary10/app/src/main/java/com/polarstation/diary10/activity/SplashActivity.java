@@ -1,4 +1,4 @@
-package com.polarstation.diary10;
+package com.polarstation.diary10.activity;
 
 import android.content.Intent;
 import androidx.databinding.DataBindingUtil;
@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivitySplashBinding;
 
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;

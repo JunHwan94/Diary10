@@ -2,11 +2,9 @@ package com.polarstation.diary10.fragment;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,10 +25,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.polarstation.diary10.BaseActivity;
-import com.polarstation.diary10.WriteDiaryActivity;
+import com.polarstation.diary10.activity.BaseActivity;
+import com.polarstation.diary10.activity.WriteDiaryActivity;
 import com.polarstation.diary10.R;
-import com.polarstation.diary10.WriterAccountActivity;
+import com.polarstation.diary10.activity.WriterAccountActivity;
 import com.polarstation.diary10.databinding.FragmentPageBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
@@ -47,9 +45,8 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
-import static com.polarstation.diary10.DiaryActivity.IS_COVER_KEY;
-import static com.polarstation.diary10.DiaryActivity.PAGE_MODEL_KEY;
-import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
+import static com.polarstation.diary10.activity.DiaryActivity.IS_COVER_KEY;
+import static com.polarstation.diary10.activity.DiaryActivity.PAGE_MODEL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
@@ -87,6 +84,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_page, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
 
+        isMenuOpen = false;
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
@@ -154,7 +152,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         setViewWhenRequesting();
         if(isCover){
             binding.pageFragmentDateTextView.setVisibility(View.INVISIBLE);
-            binding.pageFragmentContentTextView.setTypeface(Typeface.createFromAsset(getContext().getAssets(), "fonts/scdream4.otf"));
             binding.pageFragmentWritePageButton.setVisibility(View.VISIBLE);
 
             title = bundle.getString(TITLE_KEY);
@@ -206,7 +203,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         }else{
             PageModel pageModel = bundle.getParcelable(PAGE_MODEL_KEY);
             content = pageModel.getContent();
-            Log.d("PageFragment", "create view : " + content);
             pageCreateTime = pageModel.getCreateTime();
             imageUrl = pageModel.getImageUrl();
             pageKey = pageModel.getKey();
@@ -288,6 +284,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             case R.id.pageFragment_deleteDiaryButton:
                 netStat = NetworkStatus.getConnectivityStatus(getContext());
                 if(isCover && netStat == TYPE_CONNECTED){
+                    callback.dataChanges();
                     setViewWhenRequesting();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -295,6 +292,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
                                     long diaryCreateTime = diaryModel.getCreateTime();
+                                    long pageToDeleteCreateTime;
 
                                     strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).delete()
                                             .addOnSuccessListener( aVoid -> {
@@ -306,6 +304,11 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                                             callback.finishDiaryActivity();
                                                         });
                                             });
+
+                                    for(PageModel pageModel : diaryModel.getPages().values()){
+                                        pageToDeleteCreateTime = pageModel.getCreateTime();
+                                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageToDeleteCreateTime)).delete();
+                                    }
                                 }
 
                                 @Override
@@ -313,9 +316,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                                 }
                             });
-
-
                 }else if(netStat == TYPE_CONNECTED){
+                    callback.dataChanges();
                     setViewWhenRequesting();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -371,17 +373,10 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 }
                 break;
             case R.id.pageFragment_likeButton:
-                callback.likeChanges();
+                callback.dataChanges();
                 boolean likeOrNot = view.isSelected();
                 view.setSelected(!likeOrNot);
                 processLike(!likeOrNot);
-//                if(view.isSelected()){
-//                    view.setSelected(false);
-//                    processLike(false);
-//                }else{
-//                    view.setSelected(true);
-//                    processLike(true);
-//                }
                 break;
             case R.id.pageFragment_imageView:
             case R.id.pageFragment_label:

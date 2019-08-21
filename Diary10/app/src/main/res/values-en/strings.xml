@@ -7,7 +7,6 @@
     <string name="secret_diary">Make secret</string>
     <string name="select_cover">Choose cover</string>
     <string name="select_image">Choose today\'s picture</string>
-    <string name="time_zone">America/NewYork</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="auth_failed">Auth failed</string>
@@ -30,12 +29,7 @@
     <string name="sign_out">Sign out</string>
     <string name="dialog_quit">Signed out. Quit the App</string>
     <string name="font_license">Font license</string>
-    <string name="font_license_title">S-core font license</string>
-    <string name="font_license_1">S-Core\'s intellectual property rights are distributed through the S-Core homepage.</string>
-    <string name="font_license_2">"S-core fonts are free to all users, including individual and corporate users, and can be freely redistributed. "</string>
-    <string name="font_license_3">"S-core fonts may not be modified or sold by anyone other than intellectual property rights for any reason, and they must be used as they are distributed. "</string>
-    <string name="font_license_4">"S-core fonts may be bundled, redistributed or sold with other software, including this copyright notice. If you have difficulty including copyright notices for escore fonts, we recommend that you mark the source of the escore fonts. "</string>
-    <string name="font_license_5">"Images of printed materials and advertisements (including online) using S-core fonts can be used for the promotion of S-Core. If you do not want to do this, you can ask us at any time. "</string>
+
     <string name="fdb_content">content</string>
     <string name="diaries">Diaries</string>
     <string name="date_format">M - d, yyyy</string>
@@ -51,7 +45,7 @@
     <string name="liked_diaries">Like</string>
     <string name="network_not_connected">Request failed. Check internet connection.</string>
     <string name="network_not_connected_quit">Not connected to Internet. Quit the app</string>
-    <string name="image_load_failed">Image load failed. Check internet connection</string>
+    <string name="image_load_failed">Image load failed</string>
     <string name="splash_text">D i a r y\n1 8</string>
-    <string name="splash_text_guide">Record 18 characters a day</string>
+    <string name="splash_text_guide">Simply record one line a day</string>
 </resources>

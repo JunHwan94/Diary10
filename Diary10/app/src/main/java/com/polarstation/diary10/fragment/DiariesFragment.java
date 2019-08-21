@@ -14,7 +14,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.polarstation.diary10.DiaryActivity;
+import com.polarstation.diary10.activity.DiaryActivity;
 import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentDiariesBinding;

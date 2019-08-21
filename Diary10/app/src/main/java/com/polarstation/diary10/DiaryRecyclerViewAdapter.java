@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.polarstation.diary10.activity.BaseActivity;
 import com.polarstation.diary10.model.DiaryModel;
 
 import java.util.ArrayList;

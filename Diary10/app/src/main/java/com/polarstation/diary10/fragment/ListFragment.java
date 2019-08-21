@@ -2,10 +2,12 @@ package com.polarstation.diary10.fragment;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -21,8 +23,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.polarstation.diary10.BaseActivity;
-import com.polarstation.diary10.DiaryActivity;
+import com.polarstation.diary10.activity.BaseActivity;
+import com.polarstation.diary10.activity.DiaryActivity;
 import com.polarstation.diary10.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentListBinding;
@@ -92,18 +94,10 @@ public class ListFragment extends Fragment implements View.OnClickListener{
         return binding.getRoot();
     }
 
-    private void setViewWhenLoading(){
-        binding.listFragmentProgressBar.setVisibility(View.VISIBLE);
-    }
-
-    private void setViewWhenLoaded(){
-        binding.listFragmentProgressBar.setVisibility(View.INVISIBLE);
-    }
-
     private void searchDiaries(String searchWord){
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {
-            setViewWhenLoading();
+            binding.listFragmentProgressBar.setVisibility(View.VISIBLE);
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -121,7 +115,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 
-                            setViewWhenLoaded();
+                            binding.listFragmentProgressBar.setVisibility(View.INVISIBLE);
                         }
 
                         @Override
@@ -134,7 +128,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
     private void loadDiaries(){
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {
-            setViewWhenLoading();
+            binding.listFragmentProgressBar.setVisibility(View.VISIBLE);
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -148,7 +142,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 
-                            setViewWhenLoaded();
+                            binding.listFragmentProgressBar.setVisibility(View.INVISIBLE);
                         }
 
                         @Override

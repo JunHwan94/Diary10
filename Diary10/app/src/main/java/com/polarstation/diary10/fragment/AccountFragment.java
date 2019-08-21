@@ -21,9 +21,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.polarstation.diary10.BaseActivity;
-import com.polarstation.diary10.EditAccountActivity;
-import com.polarstation.diary10.PhotoViewActivity;
+import com.polarstation.diary10.activity.BaseActivity;
+import com.polarstation.diary10.activity.EditAccountActivity;
+import com.polarstation.diary10.activity.PhotoViewActivity;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentAccountBinding;
 import com.polarstation.diary10.model.UserModel;
@@ -34,11 +34,10 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
-import static com.polarstation.diary10.EditAccountActivity.COMMENT_KEY;
-import static com.polarstation.diary10.EditAccountActivity.NAME_KEY;
-import static com.polarstation.diary10.EditAccountActivity.URI_KEY;
-import static com.polarstation.diary10.MainActivity.USER_MODEL_KEY;
-import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
+import static com.polarstation.diary10.activity.EditAccountActivity.COMMENT_KEY;
+import static com.polarstation.diary10.activity.EditAccountActivity.NAME_KEY;
+import static com.polarstation.diary10.activity.EditAccountActivity.URI_KEY;
+import static com.polarstation.diary10.activity.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
@@ -66,6 +65,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_account, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
 
+        isMenuOpen = false;
         netStat = NetworkStatus.getConnectivityStatus(getContext());
         if(netStat == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
@@ -244,20 +244,18 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                         .setPositiveButton(getString(R.string.confirm), (dialogInterface, i) -> callback.quitApp() ).show();
                 break;
             case R.id.accountFragment_licenseGuideButton:
-                new AlertDialog.Builder(getContext()).setTitle(getString(R.string.font_license_title))
-                        .setMessage("\n1. " + getString(R.string.font_license_1) +
-                                "\n\n2. " + getString(R.string.font_license_2) +
-                                "\n\n3. " + getString(R.string.font_license_3) +
-                                "\n\n4. " + getString(R.string.font_license_4) +
-                                "\n\n5. " + getString(R.string.font_license_5)).setPositiveButton(getString(R.string.confirm), null).show();
+                binding.accountFragmentSlideMenu.setVisibility(View.INVISIBLE);
+                Intent photoViewActivityIntent = new Intent(getContext(), PhotoViewActivity.class);
+                photoViewActivityIntent.putExtra(URL_KEY, "");
+                startActivity(photoViewActivityIntent);
                 break;
         }
     }
 
     @Override
     public void onResume() {
+        isMenuOpen = false;
         super.onResume();
-        //
     }
 
     public static class SlidingAnimationListener implements Animation.AnimationListener{

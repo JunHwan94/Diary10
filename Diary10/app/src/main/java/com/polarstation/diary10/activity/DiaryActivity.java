@@ -1,4 +1,4 @@
-package com.polarstation.diary10;
+package com.polarstation.diary10.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +17,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityDiaryBinding;
 import com.polarstation.diary10.fragment.PageFragment;
 import com.polarstation.diary10.fragment.PageFragmentCallback;
@@ -25,7 +26,6 @@ import com.polarstation.diary10.model.PageModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
@@ -44,7 +44,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
     private String diaryKey;
     private FirebaseDatabase dbInstance;
     private int netStat;
-    private boolean isLikeChanged;
+    private boolean isDataChanged = false;
 
     public static final String IS_COVER_KEY = "isCoverKey";
     public static final String PAGE_MODEL_KEY = "pageModelKey";
@@ -179,7 +179,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
 
     @Override
     public void finishDiaryActivity() {
-        finish();
+        onBackPressed();
     }
 
     @Override
@@ -188,13 +188,13 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
     }
 
     @Override
-    public void likeChanges(){
-        isLikeChanged = !isLikeChanged;
+    public void dataChanges(){
+        isDataChanged = !isDataChanged;
     }
 
     @Override
     public void onBackPressed() {
-        if(isLikeChanged){
+        if(isDataChanged){
             Intent intent = new Intent();
             setResult(SHOW_DIARY_CODE, intent);
             setResult(RESULT_OK, intent);
@@ -205,6 +205,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == EDIT_DIARY_CODE && resultCode == Activity.RESULT_OK){
+            dataChanges();
             pagerAdapter = new ListPagerAdapter(getSupportFragmentManager());
             loadDiaryCover(pagerAdapter);
             loadDiary(diaryKey);
