@@ -10,13 +10,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activity.WriterAccountActivity"></activity>
-        <activity android:name=".activity.WriteDiaryActivity" />
+        <activity android:name=".activity.WriterAccountActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name=".activity.WriteDiaryActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activity.DiaryActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".activity.PhotoViewActivity" />
-        <activity android:name=".activity.EditAccountActivity" />
+        <activity android:name=".activity.PhotoViewActivity"
+            android:screenOrientation="portrait"  />
+        <activity android:name=".activity.EditAccountActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activity.MainActivity"
             android:screenOrientation="portrait" />

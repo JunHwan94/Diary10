@@ -17,6 +17,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.Profile;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -25,9 +26,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -91,7 +95,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         callbackManager.onActivityResult(requestCode, resultCode, data);
-        super.onActivityResult(requestCode, resultCode, data);
+//        super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == SIGN_IN_REQUEST_CODE){
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
@@ -147,7 +151,8 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
 
                 @Override
                 public void onError(FacebookException error) {
-    //                Toast.makeText(getBaseContext(), "코드 : " + error.toString(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getBaseContext(), getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
+//                    Toast.makeText(getBaseContext(), error.toString(), Toast.LENGTH_LONG).show();
                     Log.w("LoginActivity", error.toString());
                 }
             });
@@ -159,7 +164,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
         if(netStat == TYPE_CONNECTED) {
             AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
             String name = Profile.getCurrentProfile().getName();
-            String profileImageUrl = String.valueOf(Profile.getCurrentProfile().getProfilePictureUri(200,200));
+            String profileImageUrl = String.valueOf(Profile.getCurrentProfile().getProfilePictureUri(300,300));
             processCredential(credential, name, profileImageUrl);
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
@@ -167,14 +172,21 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private void processCredential(AuthCredential credential, String userName, String profileImageUrl){
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED) {
+            binding.loginActivityProgressBar.setVisibility(View.VISIBLE);
+
             authInstance.signInWithCredential(credential)
                     .addOnCompleteListener(this, task -> {
-                        if (task.isSuccessful()) {
+                        if (task.isSuccessful())
                             checkUid(userName, profileImageUrl);
-                        } else {
-                            Toast.makeText(this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
+                        else {
+                            binding.loginActivityProgressBar.setVisibility(View.INVISIBLE);
+                            // TODO: UserModel 에 이메일 추가해서 있는지 확인하고 아래 코드 실행
+                            Toast.makeText(this, getString(R.string.already_have_account), Toast.LENGTH_LONG).show();
+                            LoginManager.getInstance().logOut();
+//                            Toast.makeText(this, getString(R.string.auth_failed) + " processCredential 함수 내", Toast.LENGTH_SHORT).show();
                         }
                     });
+
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
@@ -192,7 +204,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
 
                         @Override
                         public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                            Toast.makeText(getBaseContext(), getString(R.string.account_save_failed), Toast.LENGTH_LONG).show();
                         }
             });
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
@@ -206,7 +218,6 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                 .build();
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED){
-            binding.loginActivityProgressBar.setVisibility(View.VISIBLE);
             dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).setValue(userModel)
                     .addOnSuccessListener( aVoid -> {
                         authInstance.addAuthStateListener(authStateListener);

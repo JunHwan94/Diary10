@@ -65,7 +65,7 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
         accountFragment = new AccountFragment();
         createOrWriteFragment = new WriteFragment();
         findMyDiary();
-        getProfile();
+//        getProfile();
 
         getSupportFragmentManager().beginTransaction().replace(R.id.mainActivity_frameLayout, listFragment).commit();
         setNavigationViewListener();
@@ -91,25 +91,25 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
         });
     }
 
-    private void getProfile(){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
-            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    UserModel userModel = dataSnapshot.getValue(UserModel.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable(USER_MODEL_KEY, userModel);
-                    accountFragment.setArguments(bundle);
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
-    }
+//    private void getProfile(){
+//        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+//        if(netStat == TYPE_CONNECTED) {
+//            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+//                @Override
+//                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                    UserModel userModel = dataSnapshot.getValue(UserModel.class);
+//                    Bundle bundle = new Bundle();
+//                    bundle.putParcelable(USER_MODEL_KEY, userModel);
+//                    accountFragment.setArguments(bundle);
+//                }
+//
+//                @Override
+//                public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//                }
+//            });
+//        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+//    }
 
     @Override
     public void findMyDiary(){

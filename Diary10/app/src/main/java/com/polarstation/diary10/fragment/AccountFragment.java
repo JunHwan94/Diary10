@@ -71,26 +71,21 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
             dbInstance = FirebaseDatabase.getInstance();
             authInstance = FirebaseAuth.getInstance();
 
-            if (!isChanged) {
-                Bundle bundle = getArguments();
-                setUserInfo(bundle);
-            } else {
-                String uid = authInstance.getCurrentUser().getUid();
-                dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        UserModel userModel = dataSnapshot.getValue(UserModel.class);
-                        Bundle bundle = new Bundle();
-                        bundle.putParcelable(USER_MODEL_KEY, userModel);
-                        setUserInfo(bundle);
-                    }
+            String uid = authInstance.getCurrentUser().getUid();
+            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    UserModel userModel = dataSnapshot.getValue(UserModel.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(USER_MODEL_KEY, userModel);
+                    setUserInfo(bundle);
+                }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
-            }
+                }
+            });
 
             binding.accountFragmentProfileImageView.setOnClickListener(this);
             binding.accountFragmentEditButton.setOnClickListener(this);
@@ -158,7 +153,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         if(netStat == TYPE_CONNECTED) {
             Glide.with(getContext())
                     .load(imageUrl)
-                    .apply(new RequestOptions().circleCrop())
+                    .apply(new RequestOptions().circleCrop().override(200, 200))
                     .into(binding.accountFragmentProfileImageView);
         }else Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
 

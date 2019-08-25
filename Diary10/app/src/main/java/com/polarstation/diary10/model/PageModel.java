@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class PageModel implements Parcelable {
     private String content;
-    private String imageUrl;
+    private String imageUrl = "";
     private long createTime;
     private String key;
 

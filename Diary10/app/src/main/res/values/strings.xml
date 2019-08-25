@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">오늘어때</string>
     <string name="splash_text">오늘\n어때</string>
-    <string name="splash_text_guide">하루 한 줄 간단하게 기록하세요</string>
+    <string name="splash_text_guide">간단하게 하루를 기록하세요</string>
     <string name="log_in">로그인</string>
     <string name="sign_up">회원가입</string>
     <string name="log_in_please">로그인 하세요</string>
@@ -30,7 +30,7 @@
     <string name="new_page">일기 쓰기</string>
 
     <!--Toast-->
-    <string name="auth_failed">인증 실패</string>
+    <string name="auth_failed">인증 실패. 다시 시도해보세요</string>
     <string name="auth_success">로그인 했어요 !</string>
     <string name="write_content_toast">글을 입력하세요</string>
     <string name="write_name">이름을 입력하세요</string>
@@ -76,4 +76,6 @@
 
     <string name="admob_app_id" translatable="false">ca-app-pub-4270520106393473~2766393943</string>
     <string name="edit_complete">수정 완료</string>
+    <string name="account_save_failed">계정 정보 저장 실패</string>
+    <string name="already_have_account">이메일이 같은 구글 계정으로 로그인 하신 정보가 있어요. 구글계정으로 로그인해주세요.</string>
 </resources>

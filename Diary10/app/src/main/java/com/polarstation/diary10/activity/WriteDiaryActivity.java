@@ -10,7 +10,14 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -98,15 +105,23 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
             binding.writeActivityGuideImageView.setVisibility(View.VISIBLE);
             binding.writeActivityGuideTextView.setVisibility(View.VISIBLE);
             binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
+            setLimitEditText(binding.writeActivityEditText);
         }else if(isCover){
             binding.writeActivityTitleTextView.setVisibility(View.INVISIBLE);
             binding.writeActivitySwitch.setVisibility(View.VISIBLE);
             binding.writeActivityEditText.setText(title);
             binding.writeActivityEditText.setHint(R.string.write_title);
+            binding.writeActivityEditText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+            binding.writeActivityEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(15)});
+            ViewGroup.LayoutParams params = binding.writeActivityEditText.getLayoutParams();
+            params.height = params.height / 2;
         }else{
+            // 페이지 수정 공통
             String content = intent.getStringExtra(CONTENT_KEY);
             binding.writeActivityEditText.setText(content);
+            setLimitEditText(binding.writeActivityEditText);
             binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
+            // 사진 없는 페이지 수정인 경우
             try{
                 if(imageUrl.equals(null));
             }catch(Exception e){
@@ -120,7 +135,57 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 .apply(new RequestOptions().centerCrop())
                 .into(binding.writeActivityCoverImageView);
         binding.writeActivityCoverImageView.setVisibility(View.VISIBLE);
+    }
 
+    public static void setLimitEditText(EditText editText){
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String text = String.valueOf(editText.getText());
+                String addedText = "";
+                int enterCnt = 0;
+                for(char c : text.toCharArray()){
+                    if(c == '\n') enterCnt++;
+                }
+
+                if(1 < enterCnt){
+                    if(1 < text.split("\n").length) {
+                        try {
+                            text = text.split("\n")[0] + "\n" + text.split("\n")[1] + text.split("\n")[2];
+                        }catch(Exception e){
+                            text = text.substring(0, text.length() - 1);
+                        }
+                    }else
+                        text = text.substring(0, text.length() - 1);
+                    editText.setText(text);
+                    editText.setSelection(text.length());
+                }else if(1 < text.split("\n").length && 15 < text.split("\n")[0].length()){
+                    addedText = String.valueOf(text.split("\n")[0].charAt(text.split("\n")[0].length() - 1));
+                    text = text.split("\n")[0].substring(0, 15) + "\n" + addedText + text.split("\n")[1];
+                    editText.setText(text);
+                    editText.setSelection(text.indexOf("\n") + 2);
+                }else if(1 < text.split("\n").length && 15 < text.split("\n")[1].length()){
+                    text = text.split("\n")[0] + "\n" + text.split("\n")[1].substring(0, 15);
+                    editText.setText(text);
+                    editText.setSelection(text.length());
+                }else if(!text.contains("\n") && 15 < text.length()){
+                    addedText = String.valueOf(text.charAt(text.length() - 1));
+                    text = text.substring(0, 15) + "\n" + addedText;
+                    editText.setText(text);
+                    editText.setSelection(text.length());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
     }
 
     @Override

@@ -173,7 +173,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                                 Glide.with(getContext())
                                         .load(writerImageUrl)
-                                        .apply(new RequestOptions().circleCrop())
+                                        .apply(new RequestOptions().circleCrop().override(200,200))
                                         .listener(new RequestListener<Drawable>() {
                                             @Override
                                             public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -198,7 +198,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                             }
                         });
-                setCoverImage();
+                setCoverImageViewSize();
             }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
         }else{
             PageModel pageModel = bundle.getParcelable(PAGE_MODEL_KEY);
@@ -214,6 +214,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             Date date = new Date(pageCreateTime);
 
             binding.pageFragmentContentTextView.setTextSize(22.0f);
+            content = content.replace(" ", "\u00A0");
             binding.pageFragmentContentTextView.setText("\n" + content);
             binding.pageFragmentDateTextView.setText(sdf.format(date));
 
@@ -225,11 +226,14 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
         Glide.with(getContext())
                 .load(imageUrl)
-                .apply(new RequestOptions().centerCrop())
+                .apply(isCover ? new RequestOptions().centerCrop() : new RequestOptions().centerCrop().override(500, 600))
                 .listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                        if(!String.valueOf(imageUrl).equals(""))
+                            Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
+
                         setViewWhenDone();
                         return false;
                     }
@@ -241,9 +245,10 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                     }
                 })
                 .into(binding.pageFragmentImageView);
+
     }
 
-    private void setCoverImage(){
+    private void setCoverImageViewSize(){
         DisplayMetrics metrics = getMetrics();
         ViewGroup.LayoutParams params = binding.pageFragmentImageView.getLayoutParams();
         params.width = metrics.widthPixels;

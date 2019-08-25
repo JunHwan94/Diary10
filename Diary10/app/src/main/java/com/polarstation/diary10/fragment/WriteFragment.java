@@ -8,7 +8,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spanned;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +48,7 @@ import static com.polarstation.diary10.activity.MainActivity.LIST_KEY;
 import static com.polarstation.diary10.activity.MainActivity.NEW_DIARY_TYPE;
 import static com.polarstation.diary10.activity.MainActivity.NEW_PAGE_TYPE;
 import static com.polarstation.diary10.activity.MainActivity.TYPE_KEY;
+import static com.polarstation.diary10.activity.WriteDiaryActivity.setLimitEditText;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
@@ -121,10 +125,14 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 binding.writeFragmentGuideTextView.setText(R.string.select_cover);
                 binding.writeFragmentEditText.setHint(R.string.write_title);
                 binding.writeFragmentEditText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                binding.writeFragmentEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(15)});
+                ViewGroup.LayoutParams params = binding.writeFragmentEditText.getLayoutParams();
+                params.height = params.height / 2;
                 break;
             case NEW_PAGE_TYPE:
                 List<String> diaryTitleList = bundle.getStringArrayList(LIST_KEY);
                 setSpinner(diaryTitleList);
+                setLimitEditText(binding.writeFragmentEditText);
                 break;
         }
     }
