@@ -8,12 +8,15 @@ public class UserModel implements Parcelable {
     private String profileImageUrl;
     private String comment;
     private String uid;
+    private String hash;
+    private String pushToken;
 
     public static class Builder{
         private String userName;
         private String comment = "";
         private String uid;
         private String profileImageUrl;
+        private String hash;
 
         public Builder setUserName(String userName) {
             this.userName = userName;
@@ -35,6 +38,11 @@ public class UserModel implements Parcelable {
             return this;
         }
 
+        public Builder setHash(String hash){
+            this.hash = hash;
+            return this;
+        }
+
         public UserModel build(){
             return new UserModel(this);
         }
@@ -45,6 +53,7 @@ public class UserModel implements Parcelable {
         profileImageUrl = builder.profileImageUrl;
         comment = builder.comment;
         uid = builder.uid;
+        hash = builder.hash;
     }
 
     public UserModel(){}
@@ -54,6 +63,7 @@ public class UserModel implements Parcelable {
         profileImageUrl = parcel.readString();
         comment = parcel.readString();
         uid = parcel.readString();
+        pushToken = parcel.readString();
     }
 
     public static final Parcelable.Creator CREATOR = new Parcelable.Creator(){
@@ -79,6 +89,7 @@ public class UserModel implements Parcelable {
         parcel.writeString(profileImageUrl);
         parcel.writeString(comment);
         parcel.writeString(uid);
+        parcel.writeString(pushToken);
     }
 
     public String getUserName() {
@@ -95,5 +106,9 @@ public class UserModel implements Parcelable {
 
     public String getUid() {
         return uid;
+    }
+
+    public String getPushToken(){
+        return pushToken;
     }
 }

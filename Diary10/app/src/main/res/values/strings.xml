@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">오늘어때</string>
     <string name="splash_text">오늘\n어때</string>
-    <string name="splash_text_guide">간단하게 하루를 기록하세요</string>
+    <string name="splash_text_guide">오늘은 어땠나요?</string>
     <string name="log_in">로그인</string>
     <string name="sign_up">회원가입</string>
     <string name="log_in_please">로그인 하세요</string>
@@ -22,6 +22,9 @@
     <string name="no_result">검색 결과가 없습니다</string>
     <string name="liked_diaries">좋아하는 일기장</string>
     <string name="font_license">글꼴 라이센스</string>
+    <string name="fields" translatable="false">fields</string>
+    <string name="sha_256" translatable="false">SHA-256</string>
+    <string name="notification_channel_name">기본 알림 채널</string>
 
     <string name="delete_diary">일기장 삭제</string>
     <string name="edit_diary">표지 수정</string>
@@ -39,6 +42,9 @@
     <string name="network_not_connected">요청 실패. 인터넷 연결을 확인하세요</string>
     <string name="image_load_failed">이미지를 불러올 수 없습니다.</string>
     <string name="network_not_connected_quit">인터넷에 연결되어있지 않습니다. 앱을 종료합니다</string>
+    <string name="edit_complete">수정 완료</string>
+    <string name="account_save_failed">계정 정보 저장 실패</string>
+    <string name="already_have_account">이메일이 같은 구글 계정으로 로그인 하신 정보가 있어요. 구글계정으로 로그인해주세요.</string>
 
     <!--hint-->
     <string name="write_title">일기장 제목을 입력하세요</string>
@@ -71,11 +77,19 @@
     <string name="fdb_content">content</string>
     <string name="fdb_image_url" translatable="false">imageUrl</string>
     <string name="fdb_like_users" translatable="false">likeUsers</string>
+    <string name="fdb_hash" translatable="false">hash</string>
+    <string name="fcm_send_url" translatable="false">https://fcm.googleapis.com/fcm/send</string>
+    <string name="fcm_title">좋아하는 일기장의 새 글</string>
+    <string name="fcm_text_1">님의</string>
+    <string name="media_type" translatable="false">application/json; charset=utf-8</string>
+    <string name="request_header_content_type" translatable="false">Content-Type</string>
+    <string name="request_header_content_type_value" translatable="false">application/json</string>
+    <string name="request_header_authorization" translatable="false">Authorization</string>
+    <string name="request_header_authorization_value" translatable="false">key=AIzaSyBs4ptvz5llhVpwL3sEcQUmNy-F7SehJ5o</string>
 
     <string name="date_format">yyyy년 M월 d일</string>
 
     <string name="admob_app_id" translatable="false">ca-app-pub-4270520106393473~2766393943</string>
-    <string name="edit_complete">수정 완료</string>
-    <string name="account_save_failed">계정 정보 저장 실패</string>
-    <string name="already_have_account">이메일이 같은 구글 계정으로 로그인 하신 정보가 있어요. 구글계정으로 로그인해주세요.</string>
+    <string name="basic_channel_title">기본 알림</string>
+
 </resources>

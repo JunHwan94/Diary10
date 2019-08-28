@@ -10,8 +10,7 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.InputFilter;
 import android.text.InputType;
-import android.text.Spanned;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,14 +24,19 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.gson.Gson;
 import com.polarstation.diary10.activity.BaseActivity;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentWriteBinding;
 import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.model.NotificationModel;
 import com.polarstation.diary10.model.PageModel;
+import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +47,13 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import static com.polarstation.diary10.activity.MainActivity.LIST_KEY;
 import static com.polarstation.diary10.activity.MainActivity.NEW_DIARY_TYPE;
@@ -249,7 +260,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
                                                                     .addOnSuccessListener(uri -> {
                                                                         String imageUrl = String.valueOf(uri);
-
                                                                         pushPage(content, timeStamp, key, imageUrl);
                                                                     });
                                                         });
@@ -300,10 +310,8 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                         map.put(getString(R.string.fdb_key), pageKey);
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                                                 .addOnSuccessListener(aVoid1 -> {
-
+                                                    sendFCM(diaryKey);
                                                     Toast.makeText(getContext().getApplicationContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-                                                    // 저장 후 내 페이지로 프래그먼트 변경
-                                                    callback.replaceFragment(ACCOUNT_TYPE);
                                                 });
                                     }
 
@@ -315,6 +323,81 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
                     });
         }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+    }
+
+    public void sendFCM(String diaryKey){
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                        Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
+
+                        for(String user : likeUsers.keySet()){
+                            Log.d("FCM, destUid", user);
+                            if(likeUsers.get(user)) {
+                                Log.d("FCM, like?", likeUsers.get(user)+"");
+                                dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
+                                                String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
+                                                sendRequest(getContext(), destinationUserModel, titleOfDiary);
+
+                                                callback.replaceFragment(ACCOUNT_TYPE);
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                            }
+                                        });
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
+    public static void sendRequest(Context context, UserModel destinationUserModel, String titleOfDiary){
+        Gson gson = new Gson();
+        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+
+        String title = context.getString(R.string.fcm_title);
+        String text = userName + context.getString(R.string.fcm_text_1) + " " + titleOfDiary + " " ;
+
+        NotificationModel notificationModel = new NotificationModel(destinationUserModel.getPushToken());
+        Log.d("FCM, userName", destinationUserModel.getUserName() + " / " + destinationUserModel.getPushToken());
+        notificationModel.getData().setTitle(title);
+        notificationModel.getData().setText(text);
+
+
+        RequestBody requestBody = RequestBody.create(MediaType.parse(context.getString(R.string.media_type)), gson.toJson(notificationModel));
+        okhttp3.Request request = new Request.Builder()
+                .header(context.getString(R.string.request_header_content_type), context.getString(R.string.request_header_content_type_value))
+                .addHeader(context.getString(R.string.request_header_authorization), context.getString(R.string.request_header_authorization_value))
+                .url(context.getString(R.string.fcm_send_url))
+                .post(requestBody)
+                .build();
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                Log.d("OkHttp", response.toString());
+
+            }
+        });
     }
 
     @Override

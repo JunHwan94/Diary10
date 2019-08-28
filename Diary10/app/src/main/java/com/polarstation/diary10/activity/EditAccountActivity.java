@@ -17,14 +17,13 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityEditAccountBinding;
-import com.polarstation.diary10.util.ImageHelper;
 import com.polarstation.diary10.util.NetworkStatus;
 
-import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +33,7 @@ public class EditAccountActivity extends BaseActivity implements View.OnClickLis
     private ActivityEditAccountBinding binding;
     private FirebaseStorage strInstance;
     private FirebaseDatabase dbInstance;
+    private FirebaseAuth authInstance;
     private String uid;
     private String imageUrl = "";
     private Uri imageUri;
@@ -66,7 +66,8 @@ public class EditAccountActivity extends BaseActivity implements View.OnClickLis
 
         strInstance = FirebaseStorage.getInstance();
         dbInstance = FirebaseDatabase.getInstance();
-        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        authInstance = FirebaseAuth.getInstance();
+        uid = authInstance.getCurrentUser().getUid();
 
         binding.editAccountActivityProfileImageView.setOnClickListener(this);
         binding.editAccountActivityCloseButton.setOnClickListener(this);
@@ -103,6 +104,9 @@ public class EditAccountActivity extends BaseActivity implements View.OnClickLis
                         map.clear();
                         map.put(getString(R.string.fdb_comment), comment);
                         dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).updateChildren(map);
+
+                        UserProfileChangeRequest userProfileChangeRequest = new UserProfileChangeRequest.Builder().setDisplayName(name).build();
+                        authInstance.getCurrentUser().updateProfile(userProfileChangeRequest);
 
                         resultIntent.putExtra(NAME_KEY, name);
                         resultIntent.putExtra(COMMENT_KEY, comment);

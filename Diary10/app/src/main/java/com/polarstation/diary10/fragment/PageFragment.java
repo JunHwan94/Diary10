@@ -2,9 +2,15 @@ package com.polarstation.diary10.fragment;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +22,14 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.engine.Resource;
+import com.bumptech.glide.load.resource.bitmap.BitmapDrawableTransformation;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.BitmapTransitionFactory;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -35,6 +46,8 @@ import com.polarstation.diary10.model.PageModel;
 import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -71,6 +84,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private long pageCreateTime;
     private PageFragmentCallback callback;
     private int netStat;
+    private Context context;
 
     public static final int EDIT_DIARY_CODE = 100;
     public static final String CONTENT_KEY = "contentKey";
@@ -85,7 +99,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         BaseActivity.setGlobalFont(binding.getRoot());
 
         isMenuOpen = false;
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        context = getContext();
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
             strInstance = FirebaseStorage.getInstance();
@@ -125,7 +140,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     }
 
     private void loadLikeOrNot(){
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -149,7 +164,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
     private void processBundle(Bundle bundle){
         isCover = bundle.getBoolean(IS_COVER_KEY);
-        setViewWhenRequesting();
+        setViewWhenLoading();
         if(isCover){
             binding.pageFragmentDateTextView.setVisibility(View.INVISIBLE);
             binding.pageFragmentWritePageButton.setVisibility(View.VISIBLE);
@@ -159,7 +174,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             imageUrl = bundle.getString(IMAGE_URL_KEY);
             diaryKey = bundle.getString(DIARY_KEY_KEY);
 
-            netStat = NetworkStatus.getConnectivityStatus(getContext());
+            netStat = NetworkStatus.getConnectivityStatus(context);
             if(netStat == TYPE_CONNECTED) {
                 dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
                         .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -171,7 +186,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                 String writerImageUrl = userModel.getProfileImageUrl();
                                 binding.pageFragmentWriterTextView.setText(writer);
 
-                                Glide.with(getContext())
+                                Glide.with(context)
                                         .load(writerImageUrl)
                                         .apply(new RequestOptions().circleCrop().override(200,200))
                                         .listener(new RequestListener<Drawable>() {
@@ -224,9 +239,9 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
         }
 
-        Glide.with(getContext())
+        Glide.with(context)
                 .load(imageUrl)
-                .apply(isCover ? new RequestOptions().centerCrop() : new RequestOptions().centerCrop().override(500, 600))
+                .apply(new RequestOptions().centerCrop().sizeMultiplier(0.4f))
                 .listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -245,7 +260,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                     }
                 })
                 .into(binding.pageFragmentImageView);
-
     }
 
     private void setCoverImageViewSize(){
@@ -258,14 +272,14 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
     private DisplayMetrics getMetrics(){
         DisplayMetrics metrics = new DisplayMetrics();
-        WindowManager windowManager = (WindowManager) getContext().getApplicationContext()
+        WindowManager windowManager = (WindowManager) context.getApplicationContext()
                 .getSystemService(Context.WINDOW_SERVICE);
         windowManager.getDefaultDisplay().getMetrics(metrics);
 
         return metrics;
     }
 
-    private void setViewWhenRequesting(){
+    private void setViewWhenLoading(){
         binding.pageFragmentProgressLayout.setVisibility(View.VISIBLE);
         binding.pageFragmentMenuButton.setEnabled(false);
     }
@@ -287,10 +301,10 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 }
                 break;
             case R.id.pageFragment_deleteDiaryButton:
-                netStat = NetworkStatus.getConnectivityStatus(getContext());
+                netStat = NetworkStatus.getConnectivityStatus(context);
                 if(isCover && netStat == TYPE_CONNECTED){
                     callback.dataChanges();
-                    setViewWhenRequesting();
+                    setViewWhenLoading();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -323,7 +337,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                             });
                 }else if(netStat == TYPE_CONNECTED){
                     callback.dataChanges();
-                    setViewWhenRequesting();
+                    setViewWhenLoading();
                     dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -337,16 +351,13 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                             break;
                                         }
                                     }
-                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).delete()
-                                            .addOnSuccessListener(aVoid -> {
-                                                dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).removeValue()
-                                                        .addOnSuccessListener(aVoid1 -> {
-                                                            binding.pageFragmentProgressBar.setVisibility(View.INVISIBLE);
-                                                            Toast.makeText(getContext(), getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
+                                    if(!String.valueOf(imageUrl).equals("")) {
+                                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).delete()
+                                                .addOnSuccessListener(aVoid -> {
+                                                    deletePage();
+                                                });
+                                    }else deletePage();
 
-                                                            callback.finishDiaryActivity();
-                                                        });
-                                            });
                                 }
 
                                 @Override
@@ -390,11 +401,20 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 break;
         }
     }
+    private void deletePage(){
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).removeValue()
+                .addOnSuccessListener(aVoid1 -> {
+                    binding.pageFragmentProgressBar.setVisibility(View.INVISIBLE);
+                    Toast.makeText(getContext(), getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
+
+                    callback.finishDiaryActivity();
+                });
+    }
 
     private void processLike(boolean like){
         Map<String, Object> map = new HashMap<>();
         map.put(uid, like);
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED)
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_like_users)).updateChildren(map);
         else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();

@@ -10,6 +10,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityMainBinding;
 import com.polarstation.diary10.fragment.AccountFragment;
@@ -21,6 +22,8 @@ import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
@@ -49,6 +52,7 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
     public static final String TYPE_KEY = "typeKey";
     public static final String LIST_KEY = "listKey";
     public static final String USER_MODEL_KEY = "userModelKey";
+    private static final String PUSH_TOKEN = "pushToken";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,10 +69,19 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
         accountFragment = new AccountFragment();
         createOrWriteFragment = new WriteFragment();
         findMyDiary();
-//        getProfile();
 
         getSupportFragmentManager().beginTransaction().replace(R.id.mainActivity_frameLayout, listFragment).commit();
         setNavigationViewListener();
+
+        sendPushToken();
+    }
+
+    private void sendPushToken(){
+        String token = FirebaseInstanceId.getInstance().getToken();
+        Map<String, Object> map = new HashMap<>();
+        map.put(PUSH_TOKEN, token);
+
+        dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).updateChildren(map);
     }
 
     private void setNavigationViewListener(){
@@ -90,26 +103,6 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
             return false;
         });
     }
-
-//    private void getProfile(){
-//        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-//        if(netStat == TYPE_CONNECTED) {
-//            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-//                @Override
-//                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                    UserModel userModel = dataSnapshot.getValue(UserModel.class);
-//                    Bundle bundle = new Bundle();
-//                    bundle.putParcelable(USER_MODEL_KEY, userModel);
-//                    accountFragment.setArguments(bundle);
-//                }
-//
-//                @Override
-//                public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//                }
-//            });
-//        }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
-//    }
 
     @Override
     public void findMyDiary(){

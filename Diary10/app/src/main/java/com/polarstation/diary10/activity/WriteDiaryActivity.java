@@ -4,6 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -14,9 +21,9 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -28,12 +35,16 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.gson.Gson;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding;
 import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.model.NotificationModel;
 import com.polarstation.diary10.model.PageModel;
+import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +58,7 @@ import static com.polarstation.diary10.fragment.PageFragment.EDIT_DIARY_CODE;
 import static com.polarstation.diary10.fragment.PageFragment.IS_NEW_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.PAGE_CREATE_TIME_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.PAGE_KEY_KEY;
+import static com.polarstation.diary10.fragment.WriteFragment.sendRequest;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class WriteDiaryActivity extends BaseActivity implements View.OnClickListener{
@@ -73,6 +85,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
         binding = DataBindingUtil.setContentView(this, R.layout.activity_write_diary);
         strInstance = FirebaseStorage.getInstance();
         dbInstance = FirebaseDatabase.getInstance();
+
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         Intent intent = getIntent();
@@ -338,7 +351,8 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                                                 .addOnSuccessListener(aVoid1 -> {
                                                     Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-                                                    finishWithEditResult();
+                                                    // TODO: sendFCM() 쓰기
+                                                    sendFCM(diaryKey);
                                                 });
                                     }
 
@@ -349,6 +363,43 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                 });
                     });
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+    }
+
+    public void sendFCM(String diaryKey){
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                        Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
+
+                        for(String user : likeUsers.keySet()){
+                            if(likeUsers.get(user)) {
+                                dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
+                                                String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
+                                                sendRequest(getBaseContext(), destinationUserModel, titleOfDiary);
+
+                                                finishWithEditResult();
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                            }
+                                        });
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     private void updateDatabase(String text){

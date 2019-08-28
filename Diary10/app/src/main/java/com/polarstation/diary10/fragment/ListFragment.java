@@ -2,12 +2,10 @@ package com.polarstation.diary10.fragment;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -25,7 +23,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.activity.BaseActivity;
 import com.polarstation.diary10.activity.DiaryActivity;
-import com.polarstation.diary10.DiaryRecyclerViewAdapter;
+import com.polarstation.diary10.data.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentListBinding;
 import com.polarstation.diary10.model.DiaryModel;

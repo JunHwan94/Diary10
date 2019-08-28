@@ -16,6 +16,8 @@ import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
@@ -36,6 +38,7 @@ import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -44,6 +47,10 @@ import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityLoginBinding;
 import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
+
+import org.json.JSONObject;
+
+import java.security.MessageDigest;
 
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
@@ -80,7 +87,6 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                 } else {
                     //로그아웃
                     firebaseAuth.signOut();
-//                    authInstance.removeAuthStateListener(authStateListener);
                 }
             };
 
@@ -127,7 +133,8 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
             String userName = account.getDisplayName();
             String profileImageUrl = String.valueOf(account.getPhotoUrl());
-            processCredential(credential, userName, profileImageUrl);
+            String email = account.getEmail();
+            processCredential(credential, userName, profileImageUrl, email);
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
@@ -141,7 +148,8 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             binding.loginActivityFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
                 @Override
                 public void onSuccess(LoginResult loginResult) {
-                    handleFacebookAccessToken(loginResult.getAccessToken());
+                    setViewWhenLoading();
+                    checkHashOfEmail(loginResult);
                 }
 
                 @Override
@@ -165,32 +173,29 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
             String name = Profile.getCurrentProfile().getName();
             String profileImageUrl = String.valueOf(Profile.getCurrentProfile().getProfilePictureUri(300,300));
-            processCredential(credential, name, profileImageUrl);
+
+            setViewWhenLoading();
+            processCredential(credential, name, profileImageUrl, "");
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
-    private void processCredential(AuthCredential credential, String userName, String profileImageUrl){
+    private void processCredential(AuthCredential credential, String userName, String profileImageUrl, String email){
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED) {
-            binding.loginActivityProgressBar.setVisibility(View.VISIBLE);
-
             authInstance.signInWithCredential(credential)
                     .addOnCompleteListener(this, task -> {
-                        if (task.isSuccessful())
-                            checkUid(userName, profileImageUrl);
-                        else {
-                            binding.loginActivityProgressBar.setVisibility(View.INVISIBLE);
-                            // TODO: UserModel 에 이메일 추가해서 있는지 확인하고 아래 코드 실행
-                            Toast.makeText(this, getString(R.string.already_have_account), Toast.LENGTH_LONG).show();
-                            LoginManager.getInstance().logOut();
-//                            Toast.makeText(this, getString(R.string.auth_failed) + " processCredential 함수 내", Toast.LENGTH_SHORT).show();
+                        if (task.isSuccessful()) {
+                            checkUid(userName, profileImageUrl, email);
+                        }else {
+                            setViewWhenDone();
+                            Toast.makeText(this, "task failed", Toast.LENGTH_SHORT).show();
                         }
                     });
-
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
-    private void checkUid(String userName, String profileImageUrl){
+    private void checkUid(String userName, String profileImageUrl, String email){
+        String hash = createHashValue(email);
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED) {
             uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -198,8 +203,11 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            if(dataSnapshot.getChildrenCount() == 0)
-                                addUserToFDB(userName, profileImageUrl);
+                            if(dataSnapshot.getChildrenCount() == 0) {
+                                addUserToFDB(userName, profileImageUrl, hash);
+                                UserProfileChangeRequest userProfileChangeRequest = new UserProfileChangeRequest.Builder().setDisplayName(userName).build();
+                                authInstance.getCurrentUser().updateProfile(userProfileChangeRequest);
+                            }
                         }
 
                         @Override
@@ -210,11 +218,12 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
         }else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
-    private void addUserToFDB(String userName, String profileImageUrl){
+    private void addUserToFDB(String userName, String profileImageUrl, String hash){
         UserModel userModel = new UserModel.Builder()
                 .setUserName(userName)
                 .setProfileImageUrl(profileImageUrl)
                 .setUid(uid)
+                .setHash(hash)
                 .build();
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED){
@@ -225,6 +234,73 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
                     }
             );
         } else Toast.makeText(getBaseContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+    }
+
+    private void checkHashOfEmail(LoginResult loginResult){
+        GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(),
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        try {
+                            String email = response.getJSONObject().getString(getString(R.string.email));
+                            String hash = createHashValue(email);
+//                            Toast.makeText(LoginActivity.this, email + hash, Toast.LENGTH_SHORT).show();
+                            dbInstance.getReference().child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_hash)).equalTo(hash)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    Toast.makeText(LoginActivity.this, ""+dataSnapshot.getChildrenCount(), Toast.LENGTH_SHORT).show();
+                                    if(0 != dataSnapshot.getChildrenCount()) {
+                                        Toast.makeText(getBaseContext(), getString(R.string.already_have_account), Toast.LENGTH_LONG).show();
+
+                                        setViewWhenDone();
+                                        LoginManager.getInstance().logOut();
+                                    }else handleFacebookAccessToken(loginResult.getAccessToken());
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+                                }
+                            });
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+        });
+        Bundle parameters = new Bundle();
+        parameters.putString(getString(R.string.fields), getString(R.string.email));
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    private String createHashValue(String email){
+        String hash = "";
+        try{
+            MessageDigest sh = MessageDigest.getInstance(getString(R.string.sha_256));
+            sh.update(email.getBytes());
+            byte byteData[] = sh.digest();
+            StringBuffer sb = new StringBuffer();
+            for(int i = 0 ; i < byteData.length ; i++)
+                sb.append(Integer.toString((byteData[i]&0xff) + 0x100, 16).substring(1));
+
+            hash = sb.toString();
+        }catch(Exception e){
+            e.printStackTrace();
+            hash = null;
+        }
+        return email.equals("") ? email : hash;
+    }
+
+    private void setViewWhenLoading(){
+        binding.loginActivityProgressBar.setVisibility(View.VISIBLE);
+        binding.loginActivityFacebookLoginButton.setEnabled(false);
+        binding.loginActivityGoogleLoginButton.setEnabled(false);
+    }
+
+    private void setViewWhenDone(){
+        binding.loginActivityProgressBar.setVisibility(View.INVISIBLE);
+        binding.loginActivityFacebookLoginButton.setEnabled(true);
+        binding.loginActivityGoogleLoginButton.setEnabled(true);
     }
 
     @Override
