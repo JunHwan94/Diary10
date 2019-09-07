@@ -177,20 +177,24 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                         text = text.substring(0, text.length() - 1);
                     editText.setText(text);
                     editText.setSelection(text.length());
-                }else if(1 < text.split("\n").length && 15 < text.split("\n")[0].length()){
+                }// 2줄, 첫줄 15글자 초과
+                else if(1 < text.split("\n").length && 20 < text.split("\n")[0].length()){
                     addedText = String.valueOf(text.split("\n")[0].charAt(text.split("\n")[0].length() - 1));
-                    text = text.split("\n")[0].substring(0, 15) + "\n" + addedText + text.split("\n")[1];
+                    text = text.split("\n")[0].substring(0, 20) + "\n" + addedText + text.split("\n")[1];
                     editText.setText(text);
-                    editText.setSelection(text.indexOf("\n") + 2);
-                }else if(1 < text.split("\n").length && 15 < text.split("\n")[1].length()){
+                    if(21 < text.length())
+                        editText.setSelection(text.indexOf("\n") + 2);
+                }// 2줄, 둘째줄 15글자 초과
+                else if(1 < text.split("\n").length && 20 < text.split("\n")[1].length()){
                     text = text.split("\n")[0] + "\n" + text.split("\n")[1].substring(0, 15);
                     editText.setText(text);
                     editText.setSelection(text.length());
-                }else if(!text.contains("\n") && 15 < text.length()){
+                }//
+                else if(!text.contains("\n") && 20 < text.length()){
                     addedText = String.valueOf(text.charAt(text.length() - 1));
-                    text = text.substring(0, 15) + "\n" + addedText;
+                    text = text.substring(0, 20) + "\n" + addedText;
                     editText.setText(text);
-                    editText.setSelection(text.length());
+                    editText.setSelection(text.indexOf("\n") + 2);
                 }
             }
 
@@ -351,7 +355,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                                                 .addOnSuccessListener(aVoid1 -> {
                                                     Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-                                                    // TODO: sendFCM() 쓰기
+
                                                     sendFCM(diaryKey);
                                                 });
                                     }

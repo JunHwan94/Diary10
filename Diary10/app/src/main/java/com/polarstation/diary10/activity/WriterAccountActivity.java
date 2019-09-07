@@ -1,12 +1,19 @@
 package com.polarstation.diary10.activity;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -124,6 +131,19 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
                             Glide.with(getBaseContext())
                                     .load(imageUrl)
                                     .apply(new RequestOptions().circleCrop())
+                                    .listener(new RequestListener<Drawable>() {
+                                        @Override
+                                        public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                            return false;
+                                        }
+
+                                        @Override
+                                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                            Animation fadeIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_in);
+                                            binding.writerAccountActivityProfileImageView.startAnimation(fadeIn);
+                                            return false;
+                                        }
+                                    })
                                     .into(binding.writerAccountActivityProfileImageView);
                         }
 

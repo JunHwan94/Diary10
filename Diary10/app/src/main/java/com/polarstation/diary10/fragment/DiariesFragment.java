@@ -49,6 +49,7 @@ public class DiariesFragment extends Fragment {
     private FirebaseDatabase dbInstance;
     private String type;
     private int netStat;
+    private Context context;
 
     public static final int SHOW_DIARY_CODE = 100;
 
@@ -64,12 +65,12 @@ public class DiariesFragment extends Fragment {
             loadDiariesOfType(type);
         }
 
-        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+        GridLayoutManager layoutManager = new GridLayoutManager(context, 3);
         binding.diariesFragmentRecyclerView.setLayoutManager(layoutManager);
         adapter = new DiaryRecyclerViewAdapter();
         adapter.setOnItemClickListener((holder, view, position) -> {
             DiaryModel diaryModel = adapter.getItem(position);
-            Intent intent = new Intent(getContext(), DiaryActivity.class);
+            Intent intent = new Intent(context, DiaryActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra(TITLE_KEY, diaryModel.getTitle());
             intent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
@@ -94,7 +95,7 @@ public class DiariesFragment extends Fragment {
     }
 
     private void loadMyDiaries(){
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
 
@@ -119,11 +120,11 @@ public class DiariesFragment extends Fragment {
 
                         }
                     });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void loadLikedDiaries(){
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
 
@@ -150,7 +151,7 @@ public class DiariesFragment extends Fragment {
 
                         }
                     });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -165,6 +166,7 @@ public class DiariesFragment extends Fragment {
         super.onAttach(context);
         if(context instanceof MainFragmentCallBack)
             callback = (MainFragmentCallBack)context;
+        this.context = context;
     }
 
     @Override

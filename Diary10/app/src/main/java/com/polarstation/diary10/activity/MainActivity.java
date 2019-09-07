@@ -18,7 +18,6 @@ import com.polarstation.diary10.fragment.MainFragmentCallBack;
 import com.polarstation.diary10.fragment.ListFragment;
 import com.polarstation.diary10.fragment.WriteFragment;
 import com.polarstation.diary10.model.DiaryModel;
-import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;

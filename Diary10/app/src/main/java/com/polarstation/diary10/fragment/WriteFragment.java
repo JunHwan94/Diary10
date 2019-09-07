@@ -24,7 +24,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.gson.Gson;
 import com.polarstation.diary10.activity.BaseActivity;
@@ -75,6 +74,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private int type;
     private int netStat;
     private boolean isImageChanged = false;
+    private Context context;
 
     public static final int LIST_TYPE = 0;
     public static final int CREATE_TYPE = 1;
@@ -87,7 +87,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_write, container,false);
         BaseActivity.setGlobalFont(binding.getRoot());
 
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         binding.writeFragmentEditText.setText("");
 
         if(netStat == TYPE_CONNECTED) {
@@ -102,7 +102,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
             setUI(type);
             if(type == NEW_PAGE_TYPE){
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setMessage(getString(R.string.create_diary_or_page)).setPositiveButton(getString(R.string.confirm), ((dialogInterface, i) ->{
                     type = NEW_DIARY_TYPE;
                     setUI(type);
@@ -123,7 +123,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                     binding.writeFragmentEditText.clearFocus();
                 }
             });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
 
         return binding.getRoot();
     }
@@ -149,7 +149,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     }
 
     private void setSpinner(List<String> diaryTitleList){
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, diaryTitleList);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, diaryTitleList);
         binding.writeFragmentSpinner.setAdapter(spinnerAdapter);
     }
 
@@ -165,16 +165,16 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     }
 
     private void setSaveButtonListener(){
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             binding.writeFragmentSaveButton.setOnClickListener(v -> {
                 String text = String.valueOf(binding.writeFragmentEditText.getText());
                 switch (type) {
                     case NEW_DIARY_TYPE:
                         if (binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE) {
-                            Toast.makeText(getContext(), getString(R.string.select_cover), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, getString(R.string.select_cover), Toast.LENGTH_SHORT).show();
                         } else if (String.valueOf(binding.writeFragmentEditText.getText()).equals("")) {
-                            Toast.makeText(getContext(), getString(R.string.write_title), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, getString(R.string.write_title), Toast.LENGTH_SHORT).show();
                         } else {
                             String title = text;
                             boolean isPrivate = binding.writeFragmentSwitch.isChecked();
@@ -229,7 +229,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         String content = text;
                         String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
                         if (content.equals("")) {
-                            Toast.makeText(getContext(), getString(R.string.write_content_toast), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, getString(R.string.write_content_toast), Toast.LENGTH_SHORT).show();
                         } else {
                             setViewWhenUploading();
 
@@ -277,7 +277,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
                 binding.writeFragmentEditText.setText("");
             });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void pushPage(String content, long timeStamp, String diaryKey, String imageUrl){
@@ -288,7 +288,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         .setImageUrl(imageUrl)
                         .build();
 
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).push().setValue(pageModel)
                     .addOnSuccessListener(aVoid -> {
@@ -311,7 +311,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
                                                 .addOnSuccessListener(aVoid1 -> {
                                                     sendFCM(diaryKey);
-                                                    Toast.makeText(getContext().getApplicationContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(context.getApplicationContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
                                                 });
                                     }
 
@@ -322,7 +322,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                 });
 
                     });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     public void sendFCM(String diaryKey){
@@ -343,7 +343,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                                 UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
-                                                sendRequest(getContext(), destinationUserModel, titleOfDiary);
+                                                sendRequest(context, destinationUserModel, titleOfDiary);
 
                                                 callback.replaceFragment(ACCOUNT_TYPE);
                                             }
@@ -409,7 +409,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
             binding.writeFragmentGuideTextView.setVisibility(View.INVISIBLE);
             binding.writeFragmentCoverImageView.setVisibility(View.VISIBLE);
 
-            Glide.with(getContext())
+            Glide.with(context)
                     .load(imageUri)
                     .apply(new RequestOptions().centerCrop())
                     .into(binding.writeFragmentCoverImageView);
@@ -440,6 +440,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         super.onAttach(context);
         if(context instanceof MainFragmentCallBack)
             callback = (MainFragmentCallBack) context;
+        this.context = context;
     }
 
     @Override

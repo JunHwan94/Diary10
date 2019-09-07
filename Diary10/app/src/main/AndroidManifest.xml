@@ -12,7 +12,7 @@
         android:largeHeap="true"
         android:theme="@style/AppTheme">
         <activity android:name=".activity.WriterAccountActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait"/>
         <activity android:name=".activity.WriteDiaryActivity"
             android:screenOrientation="portrait" />
         <activity

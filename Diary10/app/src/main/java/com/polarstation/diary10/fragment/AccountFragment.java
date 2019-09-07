@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +14,11 @@ import android.view.animation.AnimationUtils;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.facebook.login.LoginManager;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -41,7 +46,6 @@ import static com.polarstation.diary10.activity.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
-    private FirebaseDatabase dbInstance;
     private FirebaseAuth authInstance;
     private static FragmentAccountBinding binding;
     private String imageUrl = "";
@@ -49,8 +53,9 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     private MainFragmentCallBack callback;
     private Animation translateLeft;
     private Animation translateRight;
-    static boolean isMenuOpen = false;
+    private static boolean isMenuOpen = false;
     private int netStat;
+    private Context context;
 
     public static final int PICK_FROM_ALBUM_CODE = 100;
     public static final int EDIT_COMPLETE_CODE = 101;
@@ -66,13 +71,12 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         BaseActivity.setGlobalFont(binding.getRoot());
 
         isMenuOpen = false;
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
-            dbInstance = FirebaseDatabase.getInstance();
             authInstance = FirebaseAuth.getInstance();
 
             String uid = authInstance.getCurrentUser().getUid();
-            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            FirebaseDatabase.getInstance().getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     UserModel userModel = dataSnapshot.getValue(UserModel.class);
@@ -95,7 +99,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
 
             setFragment();
             setButtonAnimation();
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
 
         return binding.getRoot();
     }
@@ -138,8 +142,8 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     }
 
     private void setButtonAnimation(){
-        translateLeft = AnimationUtils.loadAnimation(getContext(), R.anim.translate_left);
-        translateRight = AnimationUtils.loadAnimation(getContext(), R.anim.translate_right);
+        translateLeft = AnimationUtils.loadAnimation(context, R.anim.translate_left);
+        translateRight = AnimationUtils.loadAnimation(context, R.anim.translate_right);
         Animation.AnimationListener listener = new SlidingAnimationListener();
         translateLeft.setAnimationListener(listener);
         translateRight.setAnimationListener(listener);
@@ -149,13 +153,13 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         UserModel userModel = bundle.getParcelable(USER_MODEL_KEY);
 
         imageUrl = userModel.getProfileImageUrl();
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
-            Glide.with(getContext())
+            Glide.with(context)
                     .load(imageUrl)
                     .apply(new RequestOptions().circleCrop().override(200, 200))
                     .into(binding.accountFragmentProfileImageView);
-        }else Toast.makeText(getContext(), getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
 
         String userName = userModel.getUserName();
         binding.accountFragmentNameTextView.setText(userName);
@@ -168,6 +172,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         super.onAttach(context);
         if(context instanceof MainFragmentCallBack)
             callback = (MainFragmentCallBack) context;
+        this.context = context;
     }
 
     @Override
@@ -191,10 +196,23 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
             String imageUri = data.getStringExtra(URI_KEY);
 
             if(!imageUri.equals("")) {
-//                Toast.makeText(getContext(), String.valueOf(imageUri), Toast.LENGTH_SHORT).show();
-                Glide.with(getContext())
+//                Toast.makeText(context, String.valueOf(imageUri), Toast.LENGTH_SHORT).show();
+                Glide.with(context)
                         .load(imageUri)
                         .apply(new RequestOptions().circleCrop())
+                        .listener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                Animation fadeIn = AnimationUtils.loadAnimation(context, R.anim.fade_in);
+                                binding.accountFragmentProfileImageView.startAnimation(fadeIn);
+                                return false;
+                            }
+                        })
                         .into(binding.accountFragmentProfileImageView);
                 imageUrl = imageUri;
             }
@@ -209,7 +227,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         Intent intent;
         switch(view.getId()){
             case R.id.accountFragment_profileImageView:
-                intent = new Intent(getContext(), PhotoViewActivity.class);
+                intent = new Intent(context, PhotoViewActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra(URL_KEY, imageUrl);
                 startActivity(intent);
@@ -217,7 +235,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
             case R.id.accountFragment_editButton:
                 String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
                 String comment = String.valueOf(binding.accountFragmentCommentTextView.getText());
-                intent = new Intent(getContext(), EditAccountActivity.class);
+                intent = new Intent(context, EditAccountActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra(URL_KEY, imageUrl);
                 intent.putExtra(NAME_KEY, userName);
@@ -235,12 +253,12 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
             case R.id.accountFragment_signOutButton:
                 authInstance.signOut();
                 LoginManager.getInstance().logOut();
-                new AlertDialog.Builder(getContext()).setTitle(getString(R.string.sign_out)).setMessage(getString(R.string.dialog_quit))
+                new AlertDialog.Builder(context).setTitle(getString(R.string.sign_out)).setMessage(getString(R.string.dialog_quit))
                         .setPositiveButton(getString(R.string.confirm), (dialogInterface, i) -> callback.quitApp() ).show();
                 break;
             case R.id.accountFragment_licenseGuideButton:
                 binding.accountFragmentSlideMenu.setVisibility(View.INVISIBLE);
-                Intent photoViewActivityIntent = new Intent(getContext(), PhotoViewActivity.class);
+                Intent photoViewActivityIntent = new Intent(context, PhotoViewActivity.class);
                 photoViewActivityIntent.putExtra(URL_KEY, "");
                 startActivity(photoViewActivityIntent);
                 break;

@@ -29,6 +29,8 @@ import com.polarstation.diary10.databinding.FragmentListBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +44,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
     private FirebaseDatabase dbInstance;
     private String uid;
     private int netStat;
+    private Context context;
 
     public static final String TITLE_KEY = "titleKey";
     public static final String WRITER_UID_KEY = "writerKey";
@@ -50,11 +53,11 @@ public class ListFragment extends Fragment implements View.OnClickListener{
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater,R.layout.fragment_list, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
 
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
             uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -62,7 +65,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
             adapter = new DiaryRecyclerViewAdapter();
             adapter.setOnItemClickListener((holder, view, position) -> {
                 DiaryModel diaryModel = adapter.getItem(position);
-                Intent intent = new Intent(getContext(), DiaryActivity.class);
+                Intent intent = new Intent(context, DiaryActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 // key 넘겨주기
@@ -74,7 +77,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
             });
 
             diaryModelList = new ArrayList<>();
-            GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+            GridLayoutManager layoutManager = new GridLayoutManager(context, 3);
             binding.listFragmentRecyclerView.setLayoutManager(layoutManager);
             binding.listFragmentRecyclerView.setAdapter(adapter);
             loadDiaries();
@@ -87,13 +90,13 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                     binding.listFragmentSearchEditText.clearFocus();
                 }
             });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
 
         return binding.getRoot();
     }
 
     private void searchDiaries(String searchWord){
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             binding.listFragmentProgressBar.setVisibility(View.VISIBLE);
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
@@ -109,7 +112,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                                     diaryModelList.add(diaryModel);
                             }
                             if (diaryModelList.size() == 0)
-                                Toast.makeText(getContext(), getString(R.string.no_result), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, getString(R.string.no_result), Toast.LENGTH_SHORT).show();
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 
@@ -120,11 +123,11 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                         public void onCancelled(@NonNull DatabaseError databaseError) {
                         }
                     });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void loadDiaries(){
-        netStat = NetworkStatus.getConnectivityStatus(getContext());
+        netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             binding.listFragmentProgressBar.setVisibility(View.VISIBLE);
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
@@ -148,7 +151,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
 
                         }
                     });
-        }else Toast.makeText(getContext(), getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -172,6 +175,7 @@ public class ListFragment extends Fragment implements View.OnClickListener{
         super.onAttach(context);
         if(context instanceof MainFragmentCallBack)
             callback = (MainFragmentCallBack) context;
+        this.context = context;
     }
 
     @Override
