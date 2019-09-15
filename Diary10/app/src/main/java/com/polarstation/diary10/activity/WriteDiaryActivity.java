@@ -16,6 +16,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -353,11 +354,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         Map<String, Object> map = new HashMap<>();
                                         map.put(getString(R.string.fdb_key), pageKey);
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
-                                                .addOnSuccessListener(aVoid1 -> {
-                                                    Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-
-                                                    sendFCM(diaryKey);
-                                                });
+                                                .addOnSuccessListener(aVoid1 -> sendFCM(diaryKey));
                                     }
 
                                     @Override
@@ -386,7 +383,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                                 UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
                                                 sendRequest(getBaseContext(), destinationUserModel, titleOfDiary);
-
+                                                Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
                                                 finishWithEditResult();
                                             }
 

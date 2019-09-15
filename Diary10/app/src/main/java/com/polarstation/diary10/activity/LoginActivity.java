@@ -130,6 +130,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     private void firebaseAuthWithGoogle(GoogleSignInAccount account){
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED) {
+            setViewWhenLoading();
             AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
             String userName = account.getDisplayName();
             String profileImageUrl = String.valueOf(account.getPhotoUrl());
@@ -148,7 +149,7 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             binding.loginActivityFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
                 @Override
                 public void onSuccess(LoginResult loginResult) {
-                    setViewWhenLoading();
+//                    setViewWhenLoading();
                     checkHashOfEmail(loginResult);
                 }
 

@@ -220,7 +220,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                             }
                                                         });
                                             });
-
                                         });
                                     });
                         }

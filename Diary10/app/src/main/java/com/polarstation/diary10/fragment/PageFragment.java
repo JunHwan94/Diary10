@@ -60,8 +60,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private String writerUid;
     private Animation translateLeft;
     private Animation translateRight;
-    static boolean isMenuOpen = false;
-    boolean isCover;
+    private static boolean isMenuOpen = false;
+    private boolean isCover;
     private FirebaseDatabase dbInstance;
     private FirebaseStorage strInstance;
     private String diaryKey;

@@ -34,6 +34,9 @@ import com.polarstation.diary10.databinding.FragmentAccountBinding;
 import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -42,11 +45,14 @@ import androidx.fragment.app.Fragment;
 import static com.polarstation.diary10.activity.EditAccountActivity.COMMENT_KEY;
 import static com.polarstation.diary10.activity.EditAccountActivity.NAME_KEY;
 import static com.polarstation.diary10.activity.EditAccountActivity.URI_KEY;
+import static com.polarstation.diary10.activity.MainActivity.PUSH_TOKEN;
 import static com.polarstation.diary10.activity.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
     private FirebaseAuth authInstance;
+    private FirebaseDatabase dbInstance;
+    private String uid;
     private static FragmentAccountBinding binding;
     private String imageUrl = "";
     private boolean isChanged = false;
@@ -74,9 +80,10 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             authInstance = FirebaseAuth.getInstance();
+            dbInstance = FirebaseDatabase.getInstance();
 
-            String uid = authInstance.getCurrentUser().getUid();
-            FirebaseDatabase.getInstance().getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            uid = authInstance.getCurrentUser().getUid();
+            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     UserModel userModel = dataSnapshot.getValue(UserModel.class);
@@ -225,6 +232,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View view) {
         Intent intent;
+        String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
         switch(view.getId()){
             case R.id.accountFragment_profileImageView:
                 intent = new Intent(context, PhotoViewActivity.class);
@@ -233,7 +241,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                 startActivity(intent);
                 break;
             case R.id.accountFragment_editButton:
-                String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
+//                String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
                 String comment = String.valueOf(binding.accountFragmentCommentTextView.getText());
                 intent = new Intent(context, EditAccountActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -252,6 +260,10 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.accountFragment_signOutButton:
                 authInstance.signOut();
+                Map<String, Object> map = new HashMap<>();
+                map.put(PUSH_TOKEN, "");
+                dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).updateChildren(map);
+
                 LoginManager.getInstance().logOut();
                 new AlertDialog.Builder(context).setTitle(getString(R.string.sign_out)).setMessage(getString(R.string.dialog_quit))
                         .setPositiveButton(getString(R.string.confirm), (dialogInterface, i) -> callback.quitApp() ).show();

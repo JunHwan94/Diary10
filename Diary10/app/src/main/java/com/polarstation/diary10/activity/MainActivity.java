@@ -51,7 +51,7 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
     public static final String TYPE_KEY = "typeKey";
     public static final String LIST_KEY = "listKey";
     public static final String USER_MODEL_KEY = "userModelKey";
-    private static final String PUSH_TOKEN = "pushToken";
+    public static final String PUSH_TOKEN = "pushToken";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

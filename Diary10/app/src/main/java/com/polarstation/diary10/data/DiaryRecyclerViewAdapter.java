@@ -17,6 +17,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.activity.BaseActivity;
+import com.polarstation.diary10.databinding.ItemDiaryBinding;
 import com.polarstation.diary10.model.DiaryModel;
 
 import java.util.ArrayList;
@@ -73,15 +74,13 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
     }
 
     public class DiaryViewHolder extends RecyclerView.ViewHolder{
-        private ImageView coverImageView;
-        private TextView titleTextView;
         private OnItemClickListener listener;
+        private ItemDiaryBinding binding;
 
         public DiaryViewHolder(@NonNull View itemView) {
             super(itemView);
+            binding = ItemDiaryBinding.bind(itemView);
             BaseActivity.setGlobalFont(itemView);
-            coverImageView = itemView.findViewById(R.id.diaryItem_coverImageView);
-            titleTextView = itemView.findViewById(R.id.diaryItem_titleTextView);
 
             itemView.setOnClickListener( v->{
                 int position = getAdapterPosition();
@@ -104,13 +103,13 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
                         @Override
                         public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                             Animation fadeIn = AnimationUtils.loadAnimation(itemView.getContext(), R.anim.fade_in);
-                            titleTextView.setVisibility(View.VISIBLE);
+                            binding.diaryItemTitleTextView.setVisibility(View.VISIBLE);
                             itemView.startAnimation(fadeIn);
                             return false;
                         }
                     })
-                    .into(coverImageView);
-            titleTextView.setText(diaryModel.getTitle());
+                    .into(binding.diaryItemCoverImageView);
+            binding.diaryItemTitleTextView.setText(diaryModel.getTitle());
         }
 
         public void setOnItemClickListener(OnItemClickListener listener){
