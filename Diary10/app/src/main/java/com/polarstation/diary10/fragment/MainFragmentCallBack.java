@@ -7,7 +7,5 @@ public interface MainFragmentCallBack {
     void replaceFragment(int type);
     void quitApp();
     Activity getActivity();
-    void startProgressBar();
-    void stopProgressBar();
     void setNavigationViewDisabled();
 }

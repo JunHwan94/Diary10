@@ -48,6 +48,7 @@ import static com.polarstation.diary10.activity.EditAccountActivity.URI_KEY;
 import static com.polarstation.diary10.activity.MainActivity.PUSH_TOKEN;
 import static com.polarstation.diary10.activity.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
+import static com.polarstation.diary10.util.NetworkStatus.getConnectivityStatus;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
     private FirebaseAuth authInstance;
@@ -122,16 +123,17 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         bundle.putString(FRAGMENT_TYPE_KEY, LIKED_DIARY);
         likedDiariesFragment.setArguments(bundle);
 
-        getFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
+        // getFragmentManager() 쓰면 오류?
+        getChildFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
         binding.accountFragmentTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch(tab.getPosition()){
                     case 0:
-                        getFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
+                        getChildFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
                         break;
                     case 1:
-                        getFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, likedDiariesFragment).commit();
+                        getChildFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, likedDiariesFragment).commit();
                         break;
                 }
             }
@@ -241,7 +243,6 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                 startActivity(intent);
                 break;
             case R.id.accountFragment_editButton:
-//                String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
                 String comment = String.valueOf(binding.accountFragmentCommentTextView.getText());
                 intent = new Intent(context, EditAccountActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);

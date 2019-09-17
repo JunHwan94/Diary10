@@ -60,7 +60,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
             Intent intent = getIntent();
 
             pagerAdapter = new ListPagerAdapter(getSupportFragmentManager());
-            binding.diaryActivityViewPager.setOffscreenPageLimit(3);
+            binding.diaryActivityViewPager.setOffscreenPageLimit(2);
             if(intent != null){
                 String title = intent.getStringExtra(TITLE_KEY);
                 writerUid = intent.getStringExtra(WRITER_UID_KEY);

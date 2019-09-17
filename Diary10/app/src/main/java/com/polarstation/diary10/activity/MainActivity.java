@@ -60,7 +60,7 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         bundle = new Bundle();
         dbInstance = FirebaseDatabase.getInstance();
-        startProgressBar();
+        setViewWhenLoading();
 
         listFragment = new ListFragment();
         createDiaryFragment = new WriteFragment();
@@ -132,7 +132,7 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
                                 createDiaryFragment.setArguments(bundle);
                                 createOrWriteFragment = createDiaryFragment;
                             }
-                            stopProgressBar();
+                            setViewWhenDone();
                         }
 
                         @Override
@@ -157,11 +157,13 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
             case WRITE_TYPE:
                 writeFragment = new WriteFragment();
                 getSupportFragmentManager().beginTransaction().replace(R.id.mainActivity_frameLayout, writeFragment).commit();
+                setViewWhenDone();
                 break;
             case ACCOUNT_TYPE:
                 Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_LONG).show();
                 binding.mainActivityBottomNavigationView.setSelectedItemId(R.id.action_account);
                 getSupportFragmentManager().beginTransaction().replace(R.id.mainActivity_frameLayout, accountFragment).commit();
+                setViewWhenDone();
                 break;
         }
     }
@@ -178,14 +180,12 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
         return this;
     }
 
-    @Override
-    public void startProgressBar() {
+    public void setViewWhenLoading() {
         binding.mainActivityProgressBar.setVisibility(View.VISIBLE);
         binding.mainActivityBottomNavigationView.setEnabled(false);
     }
 
-    @Override
-    public void stopProgressBar() {
+    public void setViewWhenDone() {
         binding.mainActivityProgressBar.setVisibility(View.INVISIBLE);
         binding.mainActivityBottomNavigationView.setEnabled(true);
     }
