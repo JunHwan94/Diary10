@@ -237,12 +237,14 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         String userName = String.valueOf(binding.accountFragmentNameTextView.getText());
         switch(view.getId()){
             case R.id.accountFragment_profileImageView:
+                binding.accountFragmentSlideMenu.setVisibility(View.INVISIBLE);
                 intent = new Intent(context, PhotoViewActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra(URL_KEY, imageUrl);
                 startActivity(intent);
                 break;
             case R.id.accountFragment_editButton:
+                binding.accountFragmentSlideMenu.setVisibility(View.INVISIBLE);
                 String comment = String.valueOf(binding.accountFragmentCommentTextView.getText());
                 intent = new Intent(context, EditAccountActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);

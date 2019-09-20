@@ -6,7 +6,7 @@
     <string name="log_in_please">Sign in</string>
     <string name="secret_diary">Make secret</string>
     <string name="select_cover">Choose cover</string>
-    <string name="select_image">Choose today\'s picture</string>
+    <string name="select_today_image">Choose today\'s picture</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="auth_failed">Auth failed</string>
@@ -48,4 +48,12 @@
     <string name="image_load_failed">Image load failed</string>
     <string name="splash_text">D i a r y\n1 8</string>
     <string name="splash_text_guide">Simply record one line a day</string>
+    <string name="fcm_text_1">\'s</string>
+    <string name="fcm_title">New post</string>
+    <string name="edit_complete">Edit complete</string>
+    <string name="account_save_failed">Failed to save account info</string>
+    <string name="already_have_account">You have an account from google email address in this app. Try signing in with google email</string>
+    <string name="select_an_image">Select an image</string>
+    <string name="basic_channel_title">Basic notification</string>
+    <string name="notification_channel_name">Basic Channel</string>
 </resources>

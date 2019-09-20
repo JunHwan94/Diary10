@@ -21,6 +21,7 @@ import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -121,6 +122,7 @@ public class MainActivity extends BaseActivity implements MainFragmentCallBack {
                                     String title = diaryModel.getTitle();
                                     diaryTitleList.add(title);
                                 }
+                                Collections.sort(diaryTitleList);
                                 bundle.putStringArrayList(LIST_KEY, diaryTitleList);
                                 writeFragment.setArguments(bundle);
                                 createOrWriteFragment = writeFragment;

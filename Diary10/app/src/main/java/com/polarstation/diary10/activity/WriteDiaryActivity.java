@@ -21,11 +21,7 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -36,16 +32,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.gson.Gson;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding;
 import com.polarstation.diary10.model.DiaryModel;
-import com.polarstation.diary10.model.NotificationModel;
 import com.polarstation.diary10.model.PageModel;
 import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,26 +112,21 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
             binding.writeActivityGuideImageView.setVisibility(View.VISIBLE);
             binding.writeActivityGuideTextView.setVisibility(View.VISIBLE);
             binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
-            setLimitEditText(binding.writeActivityEditText);
         }else if(isCover){
             binding.writeActivityTitleTextView.setVisibility(View.INVISIBLE);
+            binding.writeActivityEditText2.setVisibility(View.INVISIBLE);
             binding.writeActivitySwitch.setVisibility(View.VISIBLE);
             binding.writeActivityEditText.setText(title);
             binding.writeActivityEditText.setHint(R.string.write_title);
             binding.writeActivityEditText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
             binding.writeActivityEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(15)});
-            ViewGroup.LayoutParams params = binding.writeActivityEditText.getLayoutParams();
-            params.height = params.height / 2;
         }else{
             // 페이지 수정 공통
             String content = intent.getStringExtra(CONTENT_KEY);
-            binding.writeActivityEditText.setText(content);
-            setLimitEditText(binding.writeActivityEditText);
-            binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
+            binding.writeActivityEditText.setText(content.contains("\n") ? content.split("\n")[0] : content);
+            binding.writeActivityEditText2.setText(content.contains("\n") ? content.split("\n")[1] : "");
             // 사진 없는 페이지 수정인 경우
-            try{
-                if(imageUrl.equals(null));
-            }catch(Exception e){
+            if(imageUrl.equals("")){
                 binding.writeActivityGuideTextView.setText(getString(R.string.select_new_image));
                 binding.writeActivityGuideTextView.setVisibility(View.VISIBLE);
                 binding.writeActivityGuideImageView.setVisibility(View.VISIBLE);
@@ -149,61 +137,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 .apply(new RequestOptions().centerCrop())
                 .into(binding.writeActivityCoverImageView);
         binding.writeActivityCoverImageView.setVisibility(View.VISIBLE);
-    }
-
-    public static void setLimitEditText(EditText editText){
-        editText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                String text = String.valueOf(editText.getText());
-                String addedText = "";
-                int enterCnt = 0;
-                for(char c : text.toCharArray()){
-                    if(c == '\n') enterCnt++;
-                }
-
-                if(1 < enterCnt){
-                    if(1 < text.split("\n").length) {
-                        try {
-                            text = text.split("\n")[0] + "\n" + text.split("\n")[1] + text.split("\n")[2];
-                        }catch(Exception e){
-                            text = text.substring(0, text.length() - 1);
-                        }
-                    }else
-                        text = text.substring(0, text.length() - 1);
-                    editText.setText(text);
-                    editText.setSelection(text.length());
-                }// 2줄, 첫줄 15글자 초과
-                else if(1 < text.split("\n").length && 20 < text.split("\n")[0].length()){
-                    addedText = String.valueOf(text.split("\n")[0].charAt(text.split("\n")[0].length() - 1));
-                    text = text.split("\n")[0].substring(0, 20) + "\n" + addedText + text.split("\n")[1];
-                    editText.setText(text);
-                    if(21 < text.length())
-                        editText.setSelection(text.indexOf("\n") + 2);
-                }// 2줄, 둘째줄 15글자 초과
-                else if(1 < text.split("\n").length && 20 < text.split("\n")[1].length()){
-                    text = text.split("\n")[0] + "\n" + text.split("\n")[1].substring(0, 15);
-                    editText.setText(text);
-                    editText.setSelection(text.length());
-                }//
-                else if(!text.contains("\n") && 20 < text.length()){
-                    addedText = String.valueOf(text.charAt(text.length() - 1));
-                    text = text.substring(0, 20) + "\n" + addedText;
-                    editText.setText(text);
-                    editText.setSelection(text.indexOf("\n") + 2);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        });
     }
 
     @Override
@@ -218,7 +151,10 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 finish();
                 break;
             case R.id.writeActivity_saveButton:
-                String text = String.valueOf(binding.writeActivityEditText.getText());
+                setViewWhenUploading();
+                String firstLine = String.valueOf(binding.writeActivityEditText.getText());
+                String secondLine = String.valueOf(binding.writeActivityEditText2.getText());
+                String text = String.valueOf(secondLine.equals("") ? firstLine : firstLine + "\n" + secondLine);
                 if(isNew){
                     if(String.valueOf(binding.writeActivityEditText.getText()).equals("")){
                         Toast.makeText(this, getString(R.string.write_content_toast), Toast.LENGTH_SHORT).show();
@@ -240,6 +176,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
         binding.writeActivityChildConstraintLayout.setEnabled(false);
         binding.writeActivityCoverImageView.setEnabled(false);
         binding.writeActivityEditText.setEnabled(false);
+        binding.writeActivityEditText2.setEnabled(false);
         binding.writeActivitySwitch.setEnabled(false);
         binding.writeActivitySaveButton.setEnabled(false);
         binding.writeActivityCancelButton.setEnabled(false);
@@ -271,7 +208,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     private void uploadImage(String text){
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(isNew && netStat == TYPE_CONNECTED) {
-            setViewWhenUploading();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -298,7 +234,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                         }
                     });
         }else if(isCover && netStat == TYPE_CONNECTED){
-            setViewWhenUploading();
             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).putFile(imageUri)
                     .addOnCompleteListener(task -> {
                         strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).getDownloadUrl()
@@ -312,7 +247,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
 
                     });
         }else if(netStat == TYPE_CONNECTED){
-            setViewWhenUploading();
             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).putFile(imageUri)
                     .addOnCompleteListener(task -> {
                         strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).getDownloadUrl()
@@ -383,8 +317,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                                 UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
                                                 sendRequest(getBaseContext(), destinationUserModel, titleOfDiary);
-                                                Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
-                                                finishWithEditResult();
                                             }
 
                                             @Override
@@ -394,6 +326,8 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         });
                             }
                         }
+                        Toast.makeText(getBaseContext(), getString(R.string.uploaded), Toast.LENGTH_SHORT).show();
+                        finishWithEditResult();
                     }
 
                     @Override

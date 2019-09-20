@@ -19,6 +19,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.gms.ads.AdRequest;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -72,6 +73,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private PageFragmentCallback callback;
     private int netStat;
     private Context context;
+    private AdRequest adRequest;
 
     public static final int EDIT_DIARY_CODE = 100;
     public static final String CONTENT_KEY = "contentKey";
@@ -90,6 +92,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         if(netStat == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
             strInstance = FirebaseStorage.getInstance();
+            adRequest = new AdRequest.Builder().build();
 
             Bundle bundle = getArguments();
             if (bundle != null)
@@ -155,6 +158,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         if(isCover){
             binding.pageFragmentDateTextView.setVisibility(View.INVISIBLE);
             binding.pageFragmentWritePageButton.setVisibility(View.VISIBLE);
+            binding.pageFragmentAdView.loadAd(adRequest);
 
             title = bundle.getString(TITLE_KEY);
             writerUid = bundle.getString(WRITER_UID_KEY);
@@ -172,6 +176,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                                 String writerImageUrl = userModel.getProfileImageUrl();
                                 binding.pageFragmentWriterTextView.setText(writer);
+                                binding.pageFragmentContentTextView.setText(title);
 
                                 Glide.with(context)
                                         .load(writerImageUrl)
@@ -192,8 +197,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                             }
                                         })
                                         .into(binding.pageFragmentWriterImageView);
-
-                                binding.pageFragmentContentTextView.setText(title);
                             }
 
                             @Override

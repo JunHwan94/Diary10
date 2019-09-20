@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -58,11 +59,13 @@ import static com.polarstation.diary10.activity.MainActivity.LIST_KEY;
 import static com.polarstation.diary10.activity.MainActivity.NEW_DIARY_TYPE;
 import static com.polarstation.diary10.activity.MainActivity.NEW_PAGE_TYPE;
 import static com.polarstation.diary10.activity.MainActivity.TYPE_KEY;
-import static com.polarstation.diary10.activity.WriteDiaryActivity.setLimitEditText;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class WriteFragment extends Fragment implements View.OnClickListener{
+    private static final String CONTENT_FIRST_LINE_KEY = "firstLine";
+    private static final String CONTENT_SECOND_LINE_KEY = "secondLine";
+    private static final String PREFERENCE = "pref";
     private static FragmentWriteBinding binding;
     private FirebaseStorage strInstance;
     private FirebaseDatabase dbInstance;
@@ -88,8 +91,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         BaseActivity.setGlobalFont(binding.getRoot());
 
         netStat = NetworkStatus.getConnectivityStatus(context);
-        binding.writeFragmentEditText.setText("");
-
         if(netStat == TYPE_CONNECTED) {
             strInstance = FirebaseStorage.getInstance();
             dbInstance = FirebaseDatabase.getInstance();
@@ -132,18 +133,16 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         switch(type){
             case NEW_DIARY_TYPE:
                 binding.writeFragmentSpinner.setVisibility(View.INVISIBLE);
+                binding.writeFragmentEditText2.setVisibility(View.INVISIBLE);
                 binding.writeFragmentSwitch.setVisibility(View.VISIBLE);
                 binding.writeFragmentGuideTextView.setText(R.string.select_cover);
                 binding.writeFragmentEditText.setHint(R.string.write_title);
                 binding.writeFragmentEditText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                 binding.writeFragmentEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(15)});
-                ViewGroup.LayoutParams params = binding.writeFragmentEditText.getLayoutParams();
-                params.height = params.height / 2;
                 break;
             case NEW_PAGE_TYPE:
                 List<String> diaryTitleList = bundle.getStringArrayList(LIST_KEY);
                 setSpinner(diaryTitleList);
-                setLimitEditText(binding.writeFragmentEditText);
                 break;
         }
     }
@@ -158,6 +157,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         binding.writeFragmentChildConstraintLayout.setEnabled(false);
         binding.writeFragmentCoverImageView.setEnabled(false);
         binding.writeFragmentEditText.setEnabled(false);
+        binding.writeFragmentEditText2.setEnabled(false);
         binding.writeFragmentSwitch.setEnabled(false);
         binding.writeFragmentCancelButton.setEnabled(false);
         binding.writeFragmentSaveButton.setEnabled(false);
@@ -168,7 +168,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             binding.writeFragmentSaveButton.setOnClickListener(v -> {
-                String text = String.valueOf(binding.writeFragmentEditText.getText());
                 switch (type) {
                     case NEW_DIARY_TYPE:
                         if (binding.writeFragmentCoverImageView.getVisibility() == View.INVISIBLE) {
@@ -176,7 +175,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         } else if (String.valueOf(binding.writeFragmentEditText.getText()).equals("")) {
                             Toast.makeText(context, getString(R.string.write_title), Toast.LENGTH_SHORT).show();
                         } else {
-                            String title = text;
+                            String title = String.valueOf(binding.writeFragmentEditText.getText());
                             boolean isPrivate = binding.writeFragmentSwitch.isChecked();
                             long createTime = Calendar.getInstance().getTimeInMillis();
 
@@ -225,7 +224,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         }
                         break;
                     case NEW_PAGE_TYPE:
-                        String content = text;
+                        String content = String.valueOf(binding.writeFragmentEditText.getText() + "\n" + binding.writeFragmentEditText2.getText());
                         String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
                         if (content.equals("")) {
                             Toast.makeText(context, getString(R.string.write_content_toast), Toast.LENGTH_SHORT).show();
@@ -273,8 +272,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         }
                         break;
                 }
-
-                binding.writeFragmentEditText.setText("");
             });
         }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
@@ -343,8 +340,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                 UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
                                                 sendRequest(context, destinationUserModel, titleOfDiary);
-
-                                                callback.replaceFragment(ACCOUNT_TYPE);
                                             }
 
                                             @Override
@@ -354,6 +349,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                         });
                             }
                         }
+                        callback.replaceFragment(ACCOUNT_TYPE);
                     }
 
                     @Override
@@ -415,6 +411,12 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
             isImageChanged = true;
         }
+
+        SharedPreferences pref = context.getSharedPreferences(PREFERENCE, Activity.MODE_PRIVATE);
+        if(pref != null) {
+            binding.writeFragmentEditText.setText(pref.getString(CONTENT_FIRST_LINE_KEY, ""));
+            binding.writeFragmentEditText2.setText(pref.getString(CONTENT_SECOND_LINE_KEY, ""));
+        }
     }
 
     @Override
@@ -432,6 +434,19 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 callback.replaceFragment(LIST_TYPE);
                 break;
         }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        SharedPreferences pref = context.getSharedPreferences(PREFERENCE, Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(CONTENT_FIRST_LINE_KEY, String.valueOf(binding.writeFragmentEditText.getText()));
+        editor.putString(CONTENT_SECOND_LINE_KEY, String.valueOf(binding.writeFragmentEditText2.getText()));
+        editor.apply();
+
+        binding.writeFragmentEditText.setText("");
+        binding.writeFragmentEditText2.setText("");
     }
 
     @Override
