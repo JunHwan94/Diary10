@@ -48,7 +48,6 @@ import static com.polarstation.diary10.activity.EditAccountActivity.URI_KEY;
 import static com.polarstation.diary10.activity.MainActivity.PUSH_TOKEN;
 import static com.polarstation.diary10.activity.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
-import static com.polarstation.diary10.util.NetworkStatus.getConnectivityStatus;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
     private FirebaseAuth authInstance;
@@ -58,9 +57,9 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     private String imageUrl = "";
     private boolean isChanged = false;
     private MainFragmentCallBack callback;
-    private Animation translateLeft;
-    private Animation translateRight;
-    private static boolean isMenuOpen = false;
+    private Animation scaleBigger;
+    private Animation scaleSmaller;
+    private static boolean isMenuOpened = false;
     private int netStat;
     private Context context;
 
@@ -77,7 +76,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_account, container, false);
         BaseActivity.setGlobalFont(binding.getRoot());
 
-        isMenuOpen = false;
+        isMenuOpened = false;
         netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             authInstance = FirebaseAuth.getInstance();
@@ -104,6 +103,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
             binding.accountFragmentMenuButton.setOnClickListener(this);
             binding.accountFragmentSignOutButton.setOnClickListener(this);
             binding.accountFragmentLicenseGuideButton.setOnClickListener(this);
+            binding.accountFragmentRootLayout.setOnClickListener(this);
 
             setFragment();
             setButtonAnimation();
@@ -151,11 +151,11 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     }
 
     private void setButtonAnimation(){
-        translateLeft = AnimationUtils.loadAnimation(context, R.anim.translate_left);
-        translateRight = AnimationUtils.loadAnimation(context, R.anim.translate_right);
+        scaleBigger = AnimationUtils.loadAnimation(context, R.anim.scale_bigger_left_down);
+        scaleSmaller = AnimationUtils.loadAnimation(context, R.anim.scale_smaller_right_up);
         Animation.AnimationListener listener = new SlidingAnimationListener();
-        translateLeft.setAnimationListener(listener);
-        translateRight.setAnimationListener(listener);
+        scaleBigger.setAnimationListener(listener);
+        scaleSmaller.setAnimationListener(listener);
     }
 
     private void setUserInfo(Bundle bundle){
@@ -193,7 +193,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
 
     @Override
     public void onPause() {
-        isMenuOpen = false;
+        isMenuOpened = false;
         super.onPause();
     }
 
@@ -254,11 +254,11 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                 startActivityForResult(intent, EDIT_COMPLETE_CODE);
                 break;
             case R.id.accountFragment_menuButton:
-                if(isMenuOpen)
-                    binding.accountFragmentSlideMenu.startAnimation(translateRight);
+                if(isMenuOpened)
+                    binding.accountFragmentSlideMenu.startAnimation(scaleSmaller);
                 else {
                     binding.accountFragmentSlideMenu.setVisibility(View.VISIBLE);
-                    binding.accountFragmentSlideMenu.startAnimation(translateLeft);
+                    binding.accountFragmentSlideMenu.startAnimation(scaleBigger);
                 }
                 break;
             case R.id.accountFragment_signOutButton:
@@ -277,12 +277,16 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
                 photoViewActivityIntent.putExtra(URL_KEY, "");
                 startActivity(photoViewActivityIntent);
                 break;
+            case R.id.accountFragment_rootLayout:
+                if(isMenuOpened){
+                    binding.accountFragmentSlideMenu.startAnimation(scaleSmaller);
+                }break;
         }
     }
 
     @Override
     public void onResume() {
-        isMenuOpen = false;
+        isMenuOpened = false;
         super.onResume();
     }
 
@@ -294,11 +298,11 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
 
         @Override
         public void onAnimationEnd(Animation animation) {
-            if(isMenuOpen){
+            if(isMenuOpened){
                 binding.accountFragmentSlideMenu.setVisibility(View.INVISIBLE);
-                isMenuOpen = false;
+                isMenuOpened = false;
             }else
-                isMenuOpen = true;
+                isMenuOpened = true;
         }
 
         @Override

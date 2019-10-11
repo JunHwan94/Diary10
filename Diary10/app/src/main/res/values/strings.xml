@@ -6,7 +6,7 @@
     <string name="sign_up">회원가입</string>
     <string name="log_in_please">로그인 하세요</string>
     <string name="secret_diary">비밀 일기</string>
-    <string name="select_cover">표지 사진을 선택하세요</string>
+    <string name="select_cover">커버 사진을 선택하세요</string>
     <string name="select_today_image">오늘의 사진을 선택하세요</string>
     <string name="select_an_image">오늘의 사진을 선택하세요</string>
     <string name="cancel">취소</string>
@@ -22,7 +22,7 @@
     <string name="diaries">일기장</string>
     <string name="no_result">검색 결과가 없습니다</string>
     <string name="liked_diaries">좋아하는 일기장</string>
-    <string name="font_license">글꼴 라이센스</string>
+    <string name="font_license">글꼴\n라이센스</string>
     <string name="fields" translatable="false">fields</string>
     <string name="sha_256" translatable="false">SHA-256</string>
     <string name="notification_channel_name">기본 알림 채널</string>
@@ -55,6 +55,7 @@
     <string name="comment">소개 글</string>
     <string name="select_new_image">새로운 사진을 선택하세요</string>
     <string name="search">검색</string>
+    <string name="hashTag">#해시태그</string>
 
     <!--페이스북 로그인용-->
     <string name="email">email</string>
@@ -80,9 +81,11 @@
     <string name="fdb_image_url" translatable="false">imageUrl</string>
     <string name="fdb_like_users" translatable="false">likeUsers</string>
     <string name="fdb_hash" translatable="false">hash</string>
+    <string name="fdb_encoded_string" translatable="false">encodedString</string>
     <string name="fcm_send_url" translatable="false">https://fcm.googleapis.com/fcm/send</string>
     <string name="fcm_title">좋아하는 일기장의 새 글</string>
     <string name="fcm_text_1">님의</string>
+
     <string name="media_type" translatable="false">application/json; charset=utf-8</string>
     <string name="request_header_content_type" translatable="false">Content-Type</string>
     <string name="request_header_content_type_value" translatable="false">application/json</string>

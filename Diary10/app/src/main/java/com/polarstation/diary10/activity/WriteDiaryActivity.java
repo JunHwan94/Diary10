@@ -111,7 +111,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
         if(isNew){
             binding.writeActivityGuideImageView.setVisibility(View.VISIBLE);
             binding.writeActivityGuideTextView.setVisibility(View.VISIBLE);
-            binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
+//            binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
         }else if(isCover){
             binding.writeActivityTitleTextView.setVisibility(View.INVISIBLE);
             binding.writeActivityEditText2.setVisibility(View.INVISIBLE);
@@ -351,8 +351,16 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                             booleanMap.put(getString(R.string.fdb_private), isPrivate);
                             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).updateChildren(booleanMap)
                                     .addOnSuccessListener(aVoid1 -> {
-                                        Toast.makeText(getBaseContext(), getString(R.string.edit_complete), Toast.LENGTH_SHORT).show();
-                                        finishWithEditResult();
+                                        if(isPrivate){
+                                            dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_like_users)).removeValue()
+                                            .addOnSuccessListener(aVoid2 -> {
+                                                Toast.makeText(getBaseContext(), getString(R.string.edit_complete), Toast.LENGTH_SHORT).show();
+                                                finishWithEditResult();
+                                            });
+                                        }else{
+                                            Toast.makeText(getBaseContext(), getString(R.string.edit_complete), Toast.LENGTH_SHORT).show();
+                                            finishWithEditResult();
+                                        }
                                     });
                         });
             } else {

@@ -93,6 +93,24 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/writeFragment_EditText" />
 
+        <!--<EditText-->
+            <!--android:id="@+id/writeFragment_hashTagEditText"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginStart="25dp"-->
+            <!--android:layout_marginTop="8dp"-->
+            <!--android:layout_marginEnd="20dp"-->
+            <!--android:background="@null"-->
+            <!--android:hint="@string/hashTag"-->
+            <!--android:maxLength="20"-->
+            <!--android:singleLine="true"-->
+            <!--android:textSize="17sp"-->
+            <!--android:visibility="invisible"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintHorizontal_bias="1.0"-->
+            <!--app:layout_constraintStart_toStartOf="parent"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/writeFragment_EditText2" />-->
+
         <Switch
             android:id="@+id/writeFragment_switch"
             android:layout_width="wrap_content"
@@ -158,6 +176,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

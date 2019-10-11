@@ -57,10 +57,11 @@ import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 public class PageFragment extends Fragment implements View.OnClickListener{
     private FragmentPageBinding binding;
     private String imageUrl;
+    private String encodedString;
     private String uid;
     private String writerUid;
-    private Animation translateLeft;
-    private Animation translateRight;
+    private Animation scaleBigger;
+    private Animation scaleSmaller;
     private static boolean isMenuOpen = false;
     private boolean isCover;
     private FirebaseDatabase dbInstance;
@@ -120,11 +121,11 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             binding.pageFragmentMenuButton.setVisibility(View.VISIBLE);
             binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
 
-            translateLeft = AnimationUtils.loadAnimation(context, R.anim.translate_left);
-            translateRight = AnimationUtils.loadAnimation(context, R.anim.translate_right);
+            scaleBigger = AnimationUtils.loadAnimation(context, R.anim.scale_bigger_left_up);
+            scaleSmaller = AnimationUtils.loadAnimation(context, R.anim.scale_smaller_right_down);
             Animation.AnimationListener listener = new SlidingAnimationListener();
-            translateLeft.setAnimationListener(listener);
-            translateRight.setAnimationListener(listener);
+            scaleBigger.setAnimationListener(listener);
+            scaleSmaller.setAnimationListener(listener);
         }
     }
 
@@ -155,12 +156,12 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         isCover = bundle.getBoolean(IS_COVER_KEY);
         setViewWhenLoading();
 
+        title = bundle.getString(TITLE_KEY);
         if(isCover){
             binding.pageFragmentDateTextView.setVisibility(View.INVISIBLE);
             binding.pageFragmentWritePageButton.setVisibility(View.VISIBLE);
             binding.pageFragmentAdView.loadAd(adRequest);
 
-            title = bundle.getString(TITLE_KEY);
             writerUid = bundle.getString(WRITER_UID_KEY);
             imageUrl = bundle.getString(IMAGE_URL_KEY);
             diaryKey = bundle.getString(DIARY_KEY_KEY);
@@ -211,6 +212,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             content = pageModel.getContent();
             pageCreateTime = pageModel.getCreateTime();
             imageUrl = pageModel.getImageUrl();
+//            encodedString = pageModel.getImageUrl();
             pageKey = pageModel.getKey();
             diaryKey = bundle.getString(DIARY_KEY_KEY);
             writerUid = bundle.getString(WRITER_UID_KEY);
@@ -285,10 +287,10 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         switch(view.getId()){
             case R.id.pageFragment_menuButton:
                 if(isMenuOpen)
-                    binding.pageFragmentSlideMenu.startAnimation(translateRight);
+                    binding.pageFragmentSlideMenu.startAnimation(scaleSmaller);
                 else {
                     binding.pageFragmentSlideMenu.setVisibility(View.VISIBLE);
-                    binding.pageFragmentSlideMenu.startAnimation(translateLeft);
+                    binding.pageFragmentSlideMenu.startAnimation(scaleBigger);
                 }
                 break;
             case R.id.pageFragment_deleteDiaryButton:
@@ -388,7 +390,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             case R.id.pageFragment_imageView:
             case R.id.pageFragment_label:
                 if(isMenuOpen)
-                    binding.pageFragmentSlideMenu.startAnimation(translateRight);
+                    binding.pageFragmentSlideMenu.startAnimation(scaleSmaller);
                 break;
         }
     }

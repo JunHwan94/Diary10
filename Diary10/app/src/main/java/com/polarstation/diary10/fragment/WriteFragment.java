@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -34,6 +35,7 @@ import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.NotificationModel;
 import com.polarstation.diary10.model.PageModel;
 import com.polarstation.diary10.model.UserModel;
+import com.polarstation.diary10.util.ImageUtils;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.io.IOException;
@@ -66,7 +68,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private static final String CONTENT_FIRST_LINE_KEY = "firstLine";
     private static final String CONTENT_SECOND_LINE_KEY = "secondLine";
     private static final String PREFERENCE = "pref";
-    private static FragmentWriteBinding binding;
+    private FragmentWriteBinding binding;
     private FirebaseStorage strInstance;
     private FirebaseDatabase dbInstance;
     private String imageUrl;
@@ -107,11 +109,11 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 builder.setMessage(getString(R.string.create_diary_or_page)).setPositiveButton(getString(R.string.confirm), ((dialogInterface, i) ->{
                     type = NEW_DIARY_TYPE;
                     setUI(type);
-                })).setNegativeButton(getString(R.string.cancel), ((dialogInterface, i) ->
-                    setUI(type)
+                })).setNegativeButton(getString(R.string.cancel), ((dialogInterface, i) -> {}
+//                    setUI(type)
                 )).show();
 
-                setUI(type);
+//                setUI(type);
             }
 
             binding.writeFragmentChildConstraintLayout.setOnClickListener(this);
@@ -119,9 +121,9 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
             binding.writeFragmentCancelButton.setOnClickListener(this);
 
             // 키보드 올라오거나 내려갈때 이벤트
-            new TedKeyboardObserver(getActivity()).listen(isShow-> {
+            new TedKeyboardObserver(callback.getActivity()).listen(isShow-> {
                 if(!isShow){
-                    binding.writeFragmentEditText.clearFocus();
+                    binding.writeFragmentRootConstraintLayout.clearFocus();
                 }
             });
         }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
@@ -134,6 +136,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
             case NEW_DIARY_TYPE:
                 binding.writeFragmentSpinner.setVisibility(View.INVISIBLE);
                 binding.writeFragmentEditText2.setVisibility(View.INVISIBLE);
+//                binding.writeFragmentHashTagEditText.setVisibility(View.VISIBLE);
                 binding.writeFragmentSwitch.setVisibility(View.VISIBLE);
                 binding.writeFragmentGuideTextView.setText(R.string.select_cover);
                 binding.writeFragmentEditText.setHint(R.string.write_title);
@@ -224,7 +227,9 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         }
                         break;
                     case NEW_PAGE_TYPE:
-                        String content = String.valueOf(binding.writeFragmentEditText.getText() + "\n" + binding.writeFragmentEditText2.getText());
+                        String firstLine = String.valueOf(binding.writeFragmentEditText.getText());
+                        String secondLine = String.valueOf(binding.writeFragmentEditText2.getText());
+                        String content = secondLine.equals("") ? firstLine : firstLine + "\n" + secondLine;
                         String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
                         if (content.equals("")) {
                             Toast.makeText(context, getString(R.string.write_content_toast), Toast.LENGTH_SHORT).show();
@@ -253,6 +258,10 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                 pushPage(content, timeStamp, diaryKey, "");
                                             } else {
                                                 final String key = diaryKey;
+//                                                String imageFilePath = ImageUtils.getRealPathFromURI(context, imageUri);
+//                                                String encodedString = ImageUtils.fileToString(imageFilePath);
+//                                                pushPage(content, timeStamp, key, encodedString);
+
                                                 strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).putFile(imageUri)
                                                         .addOnCompleteListener(task -> {
                                                             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
@@ -281,6 +290,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 new PageModel.Builder()
                         .setContent(content)
                         .setCreateTime(timeStamp)
+//                        .setEncodedString(encodedString)
                         .setImageUrl(imageUrl)
                         .build();
 
@@ -313,10 +323,17 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
                                     @Override
                                     public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                                        Log.d("DB Error",databaseError.toString());
                                     }
                                 });
 
+                    }).addOnCanceledListener(new OnCanceledListener() {
+                        @Override
+                        public void onCanceled() {
+                            Toast.makeText(context, "실패", Toast.LENGTH_SHORT).show();
+                        }
+                    }).addOnFailureListener(aVoid->{
+                        Toast.makeText(context, "실패", Toast.LENGTH_SHORT).show();
                     });
         }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
@@ -330,9 +347,9 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
 
                         for(String user : likeUsers.keySet()){
-                            Log.d("FCM, destUid", user);
+//                            Log.d("FCM, destUid", user);
                             if(likeUsers.get(user)) {
-                                Log.d("FCM, like?", likeUsers.get(user)+"");
+//                                Log.d("FCM, like?", likeUsers.get(user)+"");
                                 dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
                                         .addListenerForSingleValueEvent(new ValueEventListener() {
                                             @Override
@@ -367,7 +384,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         String text = userName + context.getString(R.string.fcm_text_1) + " " + titleOfDiary + " " ;
 
         NotificationModel notificationModel = new NotificationModel(destinationUserModel.getPushToken());
-        Log.d("FCM, userName", destinationUserModel.getUserName() + " / " + destinationUserModel.getPushToken());
+//        Log.d("FCM, userName", destinationUserModel.getUserName() + " / " + destinationUserModel.getPushToken());
         notificationModel.getData().setTitle(title);
         notificationModel.getData().setText(text);
 

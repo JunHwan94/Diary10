@@ -39,6 +39,7 @@ import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 public class DiaryActivity extends AppCompatActivity implements PageFragmentCallback {
     private ActivityDiaryBinding binding;
     private boolean isCover = true;
+    private String title;
     private ListPagerAdapter pagerAdapter;
     private String writerUid;
     private String diaryKey;
@@ -62,7 +63,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
             pagerAdapter = new ListPagerAdapter(getSupportFragmentManager());
             binding.diaryActivityViewPager.setOffscreenPageLimit(2);
             if(intent != null){
-                String title = intent.getStringExtra(TITLE_KEY);
+                title = intent.getStringExtra(TITLE_KEY);
                 writerUid = intent.getStringExtra(WRITER_UID_KEY);
                 String imageUrl = intent.getStringExtra(IMAGE_URL_KEY);
                 diaryKey = intent.getStringExtra(DIARY_KEY_KEY);
@@ -157,6 +158,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
 
                             for(PageModel sortedPageModel : pageModelList){
                                 bundle = new Bundle();
+                                bundle.putString(TITLE_KEY, title);
                                 bundle.putString(WRITER_UID_KEY, writerUid);
                                 bundle.putString(DIARY_KEY_KEY, key);
                                 bundle.putParcelable(PAGE_MODEL_KEY, sortedPageModel);
