@@ -4,7 +4,7 @@
     <string name="log_in">Sign in</string>
     <string name="sign_up">Sign up</string>
     <string name="log_in_please">Sign in</string>
-    <string name="secret_diary">Make secret</string>
+    <string name="secret_diary">Make private</string>
     <string name="select_cover">Choose cover</string>
     <string name="select_today_image">Choose today\'s picture</string>
     <string name="save">Save</string>
@@ -37,7 +37,7 @@
     <string name="edit_diary">Edit cover</string>
     <string name="delete_page">Delete page</string>
     <string name="edit_page">Edit page</string>
-    <string name="new_page">Write</string>
+    <string name="write_new_page">Write</string>
     <string name="delete_success">Delete success</string>
     <string name="search">Search</string>
     <string name="select_new_image">Select new picture</string>

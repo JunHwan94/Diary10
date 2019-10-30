@@ -29,10 +29,10 @@
     <string name="basic_channel_title">기본 알림</string>
 
     <string name="delete_diary">일기장 삭제</string>
-    <string name="edit_diary">표지 수정</string>
+    <string name="edit_diary">커버 수정</string>
     <string name="delete_page">일기 삭제</string>
     <string name="edit_page">일기 수정</string>
-    <string name="new_page">일기 쓰기</string>
+    <string name="write_new_page">일기 쓰기</string>
 
     <!--Toast-->
     <string name="auth_failed">인증 실패. 다시 시도해보세요</string>

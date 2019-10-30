@@ -10,6 +10,7 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
+import io.reactivex.Observable;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -104,13 +105,18 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             List<DiaryModel> diaryModelList = new ArrayList<>();
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+
+                            //RxJava
+                            Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot -> {
                                 DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                                String title = diaryModel.getTitle();
-                                String writerUid = diaryModel.getUid();
-                                if (title.contains(searchWord) && !writerUid.equals(uid))
-                                    diaryModelList.add(diaryModel);
-                            }
+                                if(diaryModel.getTitle().contains(searchWord) && !diaryModel.getUid().equals(uid))
+                                    return true;
+                                else return false;
+                            }).subscribe(snapshot -> {
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                diaryModelList.add(diaryModel);
+                            });
+
                             if (diaryModelList.size() == 0)
                                 Toast.makeText(context, getString(R.string.no_result), Toast.LENGTH_SHORT).show();
                             adapter.addAll(diaryModelList);
@@ -135,11 +141,14 @@ public class ListFragment extends Fragment implements View.OnClickListener{
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             diaryModelList.clear();
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            //RxJava
+                            Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot ->
+                                    !snapshot.getValue(DiaryModel.class).getUid().equals(uid)
+                            ).subscribe(snapshot -> {
                                 DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                                if (!diaryModel.getUid().equals(uid))
-                                    diaryModelList.add(diaryModel);
-                            }
+                                diaryModelList.add(diaryModel);
+                            });
+
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 

@@ -6,6 +6,7 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
+import io.reactivex.Observable;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -145,27 +146,25 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                            PageFragment pageFragment = null;
                             List<PageModel> pageModelList = new ArrayList<>();
-                            Bundle bundle;
-                            PageModel pageModel = null;
-                            for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                pageModel = snapshot.getValue(PageModel.class);
-                                pageModelList.add(pageModel);
-                            }
-//                            Collections.reverse(pageModelList);
 
-                            for(PageModel sortedPageModel : pageModelList){
-                                bundle = new Bundle();
+                            // RxJava
+                            Observable.fromIterable(dataSnapshot.getChildren()).subscribe(snapshot -> {
+                                PageModel pageModel = snapshot.getValue(PageModel.class);
+                                pageModelList.add(pageModel);
+                            });
+
+                            Observable.fromIterable(pageModelList).subscribe(pageModel -> {
+                                Bundle bundle = new Bundle();
                                 bundle.putString(TITLE_KEY, title);
                                 bundle.putString(WRITER_UID_KEY, writerUid);
                                 bundle.putString(DIARY_KEY_KEY, key);
-                                bundle.putParcelable(PAGE_MODEL_KEY, sortedPageModel);
-                                pageFragment = new PageFragment();
+                                bundle.putParcelable(PAGE_MODEL_KEY, pageModel);
+                                PageFragment pageFragment = new PageFragment();
                                 pageFragment.setArguments(bundle);
                                 pagerAdapter.addItem(pageFragment);
-                            }
+                            });
+
                             pagerAdapter.notifyDataSetChanged();
 
                             setViewWHenLoaded();

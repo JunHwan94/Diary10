@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <set xmlns:android="http://schemas.android.com/apk/res/android">
-    <scale android:fromYScale="15%p"
+    <scale android:fromYScale="10%p"
         android:fromXScale="15%p"
         android:toXScale="0%p"
         android:toYScale="0%p"

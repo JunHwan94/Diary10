@@ -31,8 +31,8 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
 
     private OnItemClickListener listener;
 
-    public static interface OnItemClickListener{
-        public void onItemClick(DiaryViewHolder holder, View view, int position);
+    public interface OnItemClickListener{
+        void onItemClick(DiaryViewHolder holder, View view, int position);
     }
 
     public DiaryRecyclerViewAdapter() {

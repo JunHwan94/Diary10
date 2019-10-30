@@ -5,7 +5,7 @@ import android.os.Parcelable;
 
 public class UserModel implements Parcelable {
     private String userName;
-    private String profileImageUrl;
+    private String profileImageUrl = "";
     private String comment;
     private String uid;
     private String hash;

@@ -111,7 +111,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
         if(isNew){
             binding.writeActivityGuideImageView.setVisibility(View.VISIBLE);
             binding.writeActivityGuideTextView.setVisibility(View.VISIBLE);
-//            binding.writeActivityTitleTextView.setVisibility(View.VISIBLE);
         }else if(isCover){
             binding.writeActivityTitleTextView.setVisibility(View.INVISIBLE);
             binding.writeActivityEditText2.setVisibility(View.INVISIBLE);
@@ -225,7 +224,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                                     pushPage(text, timeStamp, imageUrl);
                                                 });
                                     });
-                            else pushPage(text, timeStamp, null);
+                            else pushPage(text, timeStamp, "");
                         }
 
                         @Override

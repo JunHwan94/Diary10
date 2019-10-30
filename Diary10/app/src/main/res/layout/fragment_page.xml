@@ -209,7 +209,7 @@
                         android:padding="5dp"
                         android:paddingStart="20dp"
                         android:paddingEnd="20dp"
-                        android:text="@string/new_page"
+                        android:text="@string/write_new_page"
                         android:textSize="15sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

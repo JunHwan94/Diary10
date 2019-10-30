@@ -35,7 +35,6 @@ import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.NotificationModel;
 import com.polarstation.diary10.model.PageModel;
 import com.polarstation.diary10.model.UserModel;
-import com.polarstation.diary10.util.ImageUtils;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.io.IOException;
@@ -49,6 +48,7 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
+import io.reactivex.Observable;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -78,7 +78,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private MainFragmentCallBack callback;
     private int type;
     private int netStat;
-    private boolean isImageChanged = false;
+    private boolean isImageChanged;
     private Context context;
 
     public static final int LIST_TYPE = 0;
@@ -92,6 +92,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_write, container,false);
         BaseActivity.setGlobalFont(binding.getRoot());
 
+        isImageChanged = false;
         netStat = NetworkStatus.getConnectivityStatus(context);
         if(netStat == TYPE_CONNECTED) {
             strInstance = FirebaseStorage.getInstance();
@@ -110,10 +111,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                     type = NEW_DIARY_TYPE;
                     setUI(type);
                 })).setNegativeButton(getString(R.string.cancel), ((dialogInterface, i) -> {}
-//                    setUI(type)
                 )).show();
-
-//                setUI(type);
             }
 
             binding.writeFragmentChildConstraintLayout.setOnClickListener(this);
@@ -202,17 +200,23 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                         .addListenerForSingleValueEvent(new ValueEventListener() {
                                                             @Override
                                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                                String key = null;
-                                                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                                                    DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-                                                                    if (diaryModel.getUid().equals(uid))
-                                                                        key = snapshot.getKey();
-                                                                }
-                                                                Map<String, Object> keyMap = new HashMap<>();
-                                                                keyMap.put(getString(R.string.fdb_key), key);
-                                                                dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(key).updateChildren(keyMap).addOnSuccessListener(aVoid -> {
+//                                                                String key = null;
+//                                                                for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+//                                                                    DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+//                                                                    if (diaryModel.getUid().equals(uid))
+//                                                                        key = snapshot.getKey();
+//                                                                }
+                                                                // RxJava
+                                                                Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot ->
+                                                                        snapshot.getValue(DiaryModel.class).getUid().equals(uid)
+                                                                ).subscribe(snapshot -> {
+                                                                    String key = snapshot.getKey();
+                                                                    Map<String, Object> keyMap = new HashMap<>();
+                                                                    keyMap.put(getString(R.string.fdb_key), key);
+                                                                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(key).updateChildren(keyMap).addOnSuccessListener(aVoid -> {
 
-                                                                    new Handler().postDelayed(() -> callback.replaceFragment(ACCOUNT_TYPE), 1000);
+                                                                        new Handler().postDelayed(() -> callback.replaceFragment(ACCOUNT_TYPE), 1000);
+                                                                    });
                                                                 });
                                                             }
 
@@ -241,36 +245,40 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                     .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
                                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                            DiaryModel diaryModel = null;
-                                            String diaryKey = "";
-                                            for (DataSnapshot item : dataSnapshot.getChildren()) {
-                                                diaryModel = item.getValue(DiaryModel.class);
-                                                if (diaryModel.getTitle().equals(titleOfDiary)) {
-                                                    diaryKey = item.getKey();
-                                                    break;
+//                                            DiaryModel diaryModel = null;
+//                                            String diaryKey = "";
+//                                            for(DataSnapshot item : dataSnapshot.getChildren()) {
+//                                                diaryModel = item.getValue(DiaryModel.class);
+//                                                if (diaryModel.getTitle().equals(titleOfDiary)) {
+//                                                    diaryKey = item.getKey();
+//                                                    break;
+//                                                }
+//                                            }
+                                            // RxJava
+                                            Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot ->
+                                                snapshot.getValue(DiaryModel.class).getTitle().equals(titleOfDiary)
+                                            ).subscribe(snapshot -> {
+                                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                                String diaryKey = diaryModel.getKey();
+                                                String diaryCreateTime = String.valueOf(diaryModel.getCreateTime());
+                                                long timeStamp = Calendar.getInstance().getTimeInMillis();
+                                                String pageCreateTime = String.valueOf(timeStamp);
+
+                                                if (!isImageChanged) {
+                                                    pushPage(content, timeStamp, diaryKey, "");
+                                                }else {
+                                                    final String key = diaryKey;
+
+                                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).putFile(imageUri)
+                                                            .addOnCompleteListener(task ->
+                                                                strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
+                                                                        .addOnSuccessListener(uri -> {
+                                                                            String imageUrl = String.valueOf(uri);
+                                                                            pushPage(content, timeStamp, key, imageUrl);
+                                                                        })
+                                                            );
                                                 }
-                                            }
-                                            String diaryCreateTime = String.valueOf(diaryModel.getCreateTime());
-                                            long timeStamp = Calendar.getInstance().getTimeInMillis();
-                                            String pageCreateTime = String.valueOf(timeStamp);
-
-                                            if (!isImageChanged) {
-                                                pushPage(content, timeStamp, diaryKey, "");
-                                            } else {
-                                                final String key = diaryKey;
-//                                                String imageFilePath = ImageUtils.getRealPathFromURI(context, imageUri);
-//                                                String encodedString = ImageUtils.fileToString(imageFilePath);
-//                                                pushPage(content, timeStamp, key, encodedString);
-
-                                                strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).putFile(imageUri)
-                                                        .addOnCompleteListener(task -> {
-                                                            strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(diaryCreateTime).child(pageCreateTime).getDownloadUrl()
-                                                                    .addOnSuccessListener(uri -> {
-                                                                        String imageUrl = String.valueOf(uri);
-                                                                        pushPage(content, timeStamp, key, imageUrl);
-                                                                    });
-                                                        });
-                                            }
+                                            });
                                         }
 
                                         @Override
@@ -290,7 +298,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                 new PageModel.Builder()
                         .setContent(content)
                         .setCreateTime(timeStamp)
-//                        .setEncodedString(encodedString)
                         .setImageUrl(imageUrl)
                         .build();
 
@@ -304,14 +311,12 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                 .addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        Log.d("WriteFragment", dataSnapshot.getChildrenCount() + "");
                                         String pageKey = null;
-                                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                            PageModel pageModel = snapshot.getValue(PageModel.class);
-                                            if (pageModel.getContent().equals(content))
-                                                pageKey = snapshot.getKey();
+                                        for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                            pageKey = snapshot.getKey();
                                         }
-
-//                                        Log.d("pageKey", pageKey);
+//                                            Log.d("pageKey", pageKey);
                                         Map<String, Object> map = new HashMap<>();
                                         map.put(getString(R.string.fdb_key), pageKey);
                                         dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).child(pageKey).updateChildren(map)
@@ -323,7 +328,7 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
 
                                     @Override
                                     public void onCancelled(@NonNull DatabaseError databaseError) {
-                                        Log.d("DB Error",databaseError.toString());
+                                        Log.d("DB Error", databaseError.toString());
                                     }
                                 });
 
@@ -346,26 +351,45 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
                         Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
 
-                        for(String user : likeUsers.keySet()){
-//                            Log.d("FCM, destUid", user);
-                            if(likeUsers.get(user)) {
-//                                Log.d("FCM, like?", likeUsers.get(user)+"");
-                                dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
-                                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                                            @Override
-                                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
-                                                String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
-                                                sendRequest(context, destinationUserModel, titleOfDiary);
-                                            }
+//                        for(String user : likeUsers.keySet()){
+////                            Log.d("FCM, destUid", user);
+//                            if(likeUsers.get(user)) {
+////                                Log.d("FCM, like?", likeUsers.get(user)+"");
+//                                dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
+//                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+//                                            @Override
+//                                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
+//                                                String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
+//                                                sendRequest(context, destinationUserModel, titleOfDiary);
+//                                            }
+//
+//                                            @Override
+//                                            public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//                                            }
+//                                        });
+//                            }
+//                        }
+                        // RxJava
+                        Observable.fromIterable(likeUsers.keySet()).filter(user ->
+                            likeUsers.get(user)
+                        ).subscribe(user ->
+                            dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                            UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
+                                            String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
+                                            sendRequest(context, destinationUserModel, titleOfDiary);
+                                        }
 
-                                            @Override
-                                            public void onCancelled(@NonNull DatabaseError databaseError) {
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                                            }
-                                        });
-                            }
-                        }
+                                        }
+                                    })
+                        );
                         callback.replaceFragment(ACCOUNT_TYPE);
                     }
 

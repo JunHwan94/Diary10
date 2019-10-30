@@ -30,6 +30,7 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import io.reactivex.Observable;
 
 import static com.polarstation.diary10.fragment.AccountFragment.FRAGMENT_TYPE_KEY;
 import static com.polarstation.diary10.fragment.AccountFragment.LIKED_DIARY;
@@ -105,10 +106,11 @@ public class DiariesFragment extends Fragment {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             diaryModelList.clear();
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            //RxJava
+                            Observable.fromIterable(dataSnapshot.getChildren()).subscribe(snapshot -> {
                                 DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
                                 diaryModelList.add(diaryModel);
-                            }
+                            });
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 
@@ -133,13 +135,17 @@ public class DiariesFragment extends Fragment {
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            //RxJava
+                            Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot -> {
                                 DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
                                 Map<String, Boolean> map = diaryModel.getLikeUsers();
-                                if (map.keySet().contains(uid) && map.get(uid)) {
-                                    diaryModelList.add(diaryModel);
-                                }
-                            }
+                                if(map.keySet().contains(uid) && map.get(uid))
+                                    return true;
+                                else return false;
+                            }).subscribe(snapshot -> {
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                diaryModelList.add(diaryModel);
+                            });
                             adapter.addAll(diaryModelList);
                             adapter.notifyDataSetChanged();
 

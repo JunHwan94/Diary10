@@ -151,8 +151,8 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     }
 
     private void setButtonAnimation(){
-        scaleBigger = AnimationUtils.loadAnimation(context, R.anim.scale_bigger_left_down);
-        scaleSmaller = AnimationUtils.loadAnimation(context, R.anim.scale_smaller_right_up);
+        scaleBigger = AnimationUtils.loadAnimation(context, R.anim.spread_left_down);
+        scaleSmaller = AnimationUtils.loadAnimation(context, R.anim.contract_right_up);
         Animation.AnimationListener listener = new SlidingAnimationListener();
         scaleBigger.setAnimationListener(listener);
         scaleSmaller.setAnimationListener(listener);

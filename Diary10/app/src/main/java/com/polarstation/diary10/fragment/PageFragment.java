@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +46,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import io.reactivex.Observable;
 
 import static com.polarstation.diary10.activity.DiaryActivity.IS_COVER_KEY;
 import static com.polarstation.diary10.activity.DiaryActivity.PAGE_MODEL_KEY;
@@ -53,15 +55,16 @@ import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
 import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
+import static com.polarstation.diary10.util.NetworkStatus.TYPE_NOT_CONNECTED;
 
 public class PageFragment extends Fragment implements View.OnClickListener{
     private FragmentPageBinding binding;
     private String imageUrl;
-    private String encodedString;
     private String uid;
     private String writerUid;
     private Animation scaleBigger;
     private Animation scaleSmaller;
+
     private static boolean isMenuOpen = false;
     private boolean isCover;
     private FirebaseDatabase dbInstance;
@@ -99,6 +102,12 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             if (bundle != null)
                 processBundle(bundle);
 
+//            uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+//            if(uid.equals(writerUid)) {
+//                binding.pageFragmentMenuButton.setVisibility(View.VISIBLE);
+//                binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
+//                setPopupMenu(binding.pageFragmentMenuButton);
+//            }
             setMenu();
             loadLikeOrNot();
 
@@ -121,8 +130,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             binding.pageFragmentMenuButton.setVisibility(View.VISIBLE);
             binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
 
-            scaleBigger = AnimationUtils.loadAnimation(context, R.anim.scale_bigger_left_up);
-            scaleSmaller = AnimationUtils.loadAnimation(context, R.anim.scale_smaller_right_down);
+            scaleBigger = AnimationUtils.loadAnimation(context, R.anim.spread_left_up);
+            scaleSmaller = AnimationUtils.loadAnimation(context, R.anim.contract_right_down);
             Animation.AnimationListener listener = new SlidingAnimationListener();
             scaleBigger.setAnimationListener(listener);
             scaleSmaller.setAnimationListener(listener);
@@ -131,16 +140,16 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
     private void loadLikeOrNot(){
         netStat = NetworkStatus.getConnectivityStatus(context);
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat == TYPE_CONNECTED && !uid.equals(writerUid)) {
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
                             Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
-                            if(likeUsers.keySet().contains(uid) && likeUsers.get(uid)){
+                            if(likeUsers.keySet().contains(uid) && likeUsers.get(uid))
                                 binding.pageFragmentLikeButton.setSelected(true);
-                            }else
+                            else
                                 binding.pageFragmentLikeButton.setSelected(false);
                         }
 
@@ -149,7 +158,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                         }
                     });
-        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+        }else if(netStat == TYPE_NOT_CONNECTED && !uid.equals(writerUid))
+            Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
     private void processBundle(Bundle bundle){
@@ -168,43 +178,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
             netStat = NetworkStatus.getConnectivityStatus(context);
             if(netStat == TYPE_CONNECTED) {
-                dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                UserModel userModel = dataSnapshot.getValue(UserModel.class);
-                                String writer = userModel.getUserName();
-
-                                String writerImageUrl = userModel.getProfileImageUrl();
-                                binding.pageFragmentWriterTextView.setText(writer);
-                                binding.pageFragmentContentTextView.setText(title);
-
-                                Glide.with(context)
-                                        .load(writerImageUrl)
-                                        .apply(new RequestOptions().circleCrop().override(200,200))
-                                        .listener(new RequestListener<Drawable>() {
-                                            @Override
-                                            public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                                Toast.makeText(context, getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
-                                                return false;
-                                            }
-
-                                            @Override
-                                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                                binding.pageFragmentWriterImageView.setVisibility(View.VISIBLE);
-                                                binding.pageFragmentWriterTextView.setVisibility(View.VISIBLE);
-
-                                                return false;
-                                            }
-                                        })
-                                        .into(binding.pageFragmentWriterImageView);
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                            }
-                        });
+                setWriterAndImage(writerUid);
                 setCoverImageViewSize();
             }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
         }else{
@@ -212,13 +186,11 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             content = pageModel.getContent();
             pageCreateTime = pageModel.getCreateTime();
             imageUrl = pageModel.getImageUrl();
-//            encodedString = pageModel.getImageUrl();
             pageKey = pageModel.getKey();
             diaryKey = bundle.getString(DIARY_KEY_KEY);
             writerUid = bundle.getString(WRITER_UID_KEY);
 
             SimpleDateFormat sdf = new SimpleDateFormat(getString(R.string.date_format));
-//            sdf.setTimeZone(TimeZone.getTimeZone(getString(R.string.time_zone)));
             Date date = new Date(pageCreateTime);
 
             binding.pageFragmentContentTextView.setTextSize(22.0f);
@@ -228,7 +200,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
             binding.pageFragmentDeleteDiaryButton.setText(getString(R.string.delete_page));
             binding.pageFragmentEditDiaryButton.setText(getString(R.string.edit_page));
-            binding.pageFragmentSlideMenu.removeView(binding.pageFragmentWritePageButton);
+            binding.pageFragmentWritePageButton.setVisibility(View.GONE);
             binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
         }
 
@@ -253,6 +225,46 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                     }
                 })
                 .into(binding.pageFragmentImageView);
+    }
+
+    private void setWriterAndImage(String writerUid){
+        dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        UserModel userModel = dataSnapshot.getValue(UserModel.class);
+                        String writer = userModel.getUserName();
+
+                        String writerImageUrl = userModel.getProfileImageUrl();
+                        binding.pageFragmentWriterTextView.setText(writer);
+                        binding.pageFragmentContentTextView.setText(title);
+
+                        Glide.with(context)
+                                .load(writerImageUrl)
+                                .apply(new RequestOptions().circleCrop().override(200,200))
+                                .listener(new RequestListener<Drawable>() {
+                                    @Override
+                                    public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                        Toast.makeText(context, getString(R.string.image_load_failed), Toast.LENGTH_SHORT).show();
+                                        return false;
+                                    }
+
+                                    @Override
+                                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                        binding.pageFragmentWriterImageView.setVisibility(View.VISIBLE);
+                                        binding.pageFragmentWriterTextView.setVisibility(View.VISIBLE);
+
+                                        return false;
+                                    }
+                                })
+                                .into(binding.pageFragmentWriterImageView);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     private void setCoverImageViewSize(){
@@ -286,6 +298,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     public void onClick(View view) {
         switch(view.getId()){
             case R.id.pageFragment_menuButton:
+//                popupMenu.show();
                 if(isMenuOpen)
                     binding.pageFragmentSlideMenu.startAnimation(scaleSmaller);
                 else {
@@ -298,70 +311,14 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 if(isCover && netStat == TYPE_CONNECTED){
                     callback.dataChanges();
                     setViewWhenLoading();
-                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
-                                    long diaryCreateTime = diaryModel.getCreateTime();
-                                    long pageToDeleteCreateTime;
-
-                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).delete()
-                                            .addOnSuccessListener( aVoid -> {
-                                                dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).removeValue()
-                                                        .addOnSuccessListener( aVoid1 -> {
-                                                            binding.pageFragmentProgressBar.setVisibility(View.INVISIBLE);
-                                                            Toast.makeText(context, getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
-
-                                                            callback.finishDiaryActivity();
-                                                        });
-                                            });
-
-                                    for(PageModel pageModel : diaryModel.getPages().values()){
-                                        pageToDeleteCreateTime = pageModel.getCreateTime();
-                                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageToDeleteCreateTime)).delete();
-                                    }
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
+                    deletePictures();
                 }else if(netStat == TYPE_CONNECTED){
                     callback.dataChanges();
                     setViewWhenLoading();
-                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
-                                    long diaryCreateTime = diaryModel.getCreateTime();
-                                    long pageCreateTime = 0;
-                                    for(PageModel pageModel : diaryModel.getPages().values()){
-                                        if(pageModel.getKey().equals(pageKey)) {
-                                            pageCreateTime = pageModel.getCreateTime();
-                                            break;
-                                        }
-                                    }
-                                    if(!String.valueOf(imageUrl).equals("")) {
-                                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).delete()
-                                                .addOnSuccessListener(aVoid -> {
-                                                    deletePage();
-                                                });
-                                    }else deletePage();
-
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
+                    deletePicture();
                 }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.pageFragment_editDiaryButton:
-                //diarykey 전달, 커버 이미지, 제목 수정
                 startWriteDiaryActivity(isCover);
                 break;
             case R.id.pageFragment_writePageButton:
@@ -393,6 +350,66 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                     binding.pageFragmentSlideMenu.startAnimation(scaleSmaller);
                 break;
         }
+    }
+
+    private void deletePictures(){
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                        long diaryCreateTime = diaryModel.getCreateTime();
+
+                        strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).delete()
+                                .addOnSuccessListener( aVoid ->
+                                    dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).removeValue()
+                                            .addOnSuccessListener( aVoid1 -> {
+                                                binding.pageFragmentProgressBar.setVisibility(View.INVISIBLE);
+                                                Toast.makeText(context, getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
+
+                                                //RxJava
+                                                Observable.fromIterable(diaryModel.getPages().values()).subscribe(pageModel -> {
+                                                    long pageToDeleteCreateTime = pageModel.getCreateTime();
+                                                    strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageToDeleteCreateTime)).delete();
+                                                });
+
+                                                callback.finishDiaryActivity();
+                                            })
+                                );
+
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
+    private void deletePicture(){
+        dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
+                        long diaryCreateTime = diaryModel.getCreateTime();
+
+                        // RxJava
+                        Observable.fromIterable(diaryModel.getPages().values()).filter(pageModel -> pageModel.getKey().equals(pageKey)).subscribe(pageModel -> {
+                            if(!String.valueOf(imageUrl).equals("")) {
+                                strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).delete()
+                                        .addOnSuccessListener(aVoid -> deletePage())
+                                        .addOnFailureListener(e -> e.printStackTrace());
+                            }else deletePage();
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     private void deletePage(){
@@ -429,6 +446,55 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
         callback.getActivity().startActivityForResult(intent, EDIT_DIARY_CODE);
     }
+
+//    private void setPopupMenu(View v){
+//        popupMenu = new PopupMenu(context, v);
+//        popupMenu.setGravity(Gravity.TOP);
+//        if(isCover){
+//            popupMenu.inflate(R.menu.cover_menu);
+//            popupMenu.setOnMenuItemClickListener(item -> {
+//                switch(item.getItemId()){
+//                    case R.id.delete:
+//                        netStat = NetworkStatus.getConnectivityStatus(context);
+//                        if(netStat == TYPE_CONNECTED) {
+//                            callback.dataChanges();
+//                            setViewWhenLoading();
+//                            deletePictures();
+//                        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case R.id.edit:
+//                        startWriteDiaryActivity(isCover);
+//                        break;
+//                    case R.id.write:
+//                        //diarykey 전달, 하위 pages에 추가하는 액티비티
+//                        Intent intent = new Intent(context, WriteDiaryActivity.class);
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                        intent.putExtra(TITLE_KEY, title);
+//                        intent.putExtra(IS_NEW_KEY, true);
+//                        intent.putExtra(DIARY_KEY_KEY, diaryKey);
+//                        callback.getActivity().startActivityForResult(intent, EDIT_DIARY_CODE);
+//                }
+//                return false;
+//            });
+//        }else {
+//            popupMenu.inflate(R.menu.page_menu);
+//            popupMenu.setOnMenuItemClickListener(item -> {
+//                switch(item.getItemId()){
+//                    case R.id.delete:
+//                        netStat = NetworkStatus.getConnectivityStatus(context);
+//                        if(netStat == TYPE_CONNECTED) {
+//                            callback.dataChanges();
+//                            setViewWhenLoading();
+//                            deletePicture();
+//                        }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case R.id.edit:
+//                        startWriteDiaryActivity(isCover);
+//                }
+//                return false;
+//            });
+//        }
+//    }
 
     @Override
     public void onAttach(Context context) {
