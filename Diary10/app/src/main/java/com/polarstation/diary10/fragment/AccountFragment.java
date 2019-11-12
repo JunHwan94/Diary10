@@ -123,7 +123,7 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
         bundle.putString(FRAGMENT_TYPE_KEY, LIKED_DIARY);
         likedDiariesFragment.setArguments(bundle);
 
-        // getFragmentManager() 쓰면 오류?
+        // getFragmentManager() 쓰면 NullPointerException
         getChildFragmentManager().beginTransaction().replace(R.id.accountFragment_frameLayout, myDiariesFragment).commit();
         binding.accountFragmentTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override

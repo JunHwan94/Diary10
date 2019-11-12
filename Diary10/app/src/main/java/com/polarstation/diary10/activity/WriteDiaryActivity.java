@@ -4,21 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.MediaStore;
-import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.view.View;
@@ -150,7 +141,6 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                 finish();
                 break;
             case R.id.writeActivity_saveButton:
-                setViewWhenUploading();
                 String firstLine = String.valueOf(binding.writeActivityEditText.getText());
                 String secondLine = String.valueOf(binding.writeActivityEditText2.getText());
                 String text = String.valueOf(secondLine.equals("") ? firstLine : firstLine + "\n" + secondLine);
@@ -207,6 +197,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     private void uploadImage(String text){
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(isNew && netStat == TYPE_CONNECTED) {
+            setViewWhenUploading();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
