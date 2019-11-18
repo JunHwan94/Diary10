@@ -26,6 +26,7 @@ class SplashActivity : BaseActivity() {
             GlobalScope.launch {
                 delay(1200)
                 startActivity(intent)
+                finish()
             }
         }else Toast.makeText(baseContext, getString(R.string.network_not_connected_quit), Toast.LENGTH_SHORT).show()
     }
