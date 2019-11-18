@@ -99,7 +99,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
         if(netStat == NetworkStatus.TYPE_CONNECTED){
             setViewWhenLoading()
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-            val userName: String = account.displayName.toString()
+            val userName : String = account.displayName.toString()
             val profileImageUrl = account.photoUrl.toString()
             val email : String = account.email.toString()
             processCredential(credential, userName, profileImageUrl, email)
