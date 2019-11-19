@@ -2,7 +2,9 @@ package com.polarstation.diary10.activity
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -54,8 +56,8 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
             authStateListener = FirebaseAuth.AuthStateListener { auth ->
                 val user = auth.currentUser
                 if(user != null){
-                    Log.d("AuthStateListener","User not null")
-                    val intent = Intent(applicationContext, MainActivity::class.java)
+//                    Log.d("AuthStateListener","User not null")
+                    val intent = Intent(applicationContext, MainActivityKt::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                     startActivity(intent)
                     finish()
@@ -94,7 +96,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun firebaseAuthWithGoogle(account: GoogleSignInAccount) {
-        Log.d("FunFAuthWithGmail", "Run Authorizing")
+//        Log.d("FunFAuthWithGmail", "Run Authorizing")
         netStat = NetworkStatus.getConnectivityStatus(this)
         if(netStat == NetworkStatus.TYPE_CONNECTED){
             setViewWhenLoading()
@@ -107,7 +109,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun processCredential(credential: AuthCredential, userName: String, profileImageUrl: String, email: String) {
-        Log.d("Fun procCred", "Process Credential")
+//        Log.d("Fun procCred", "Process Credential")
         netStat = NetworkStatus.getConnectivityStatus(this)
         if(netStat == NetworkStatus.TYPE_CONNECTED){
             authInstance.signInWithCredential(credential)
@@ -130,7 +132,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
             dbInstance.reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            if(dataSnapshot.childrenCount.equals(0)){
+                            if(dataSnapshot.childrenCount.toInt() == 0){
                                 addUserToDB(userName, profileImageUrl, hash)
                                 val userProfileChangeRequest = UserProfileChangeRequest.Builder().setDisplayName(userName).build()
                                 authInstance.currentUser!!.updateProfile(userProfileChangeRequest)
@@ -145,6 +147,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun addUserToDB(userName: String?, profileImageUrl: String, hash: String) {
+//        Log.d("AddUserToDB", "Called")
         val userModel =
                 UserModel.Builder()
                         .setUserName(userName)
@@ -158,7 +161,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
             dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).setValue(userModel)
                     .addOnSuccessListener { // aVoid -> 람다식에서 변수가 1개일 때 그것을 쓰지 않으면 지워버림
                         authInstance.addAuthStateListener(authStateListener)
-                        Toast.makeText(applicationContext, getString(R.string.auth_success), Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(applicationContext, getString(R.string.auth_success), Toast.LENGTH_SHORT).show()
                     }
         }else Toast.makeText(baseContext, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
     }
@@ -204,7 +207,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             if(0 < dataSnapshot.childrenCount) {
-                                Toast.makeText(baseContext, getString(R.string.already_have_account) + dataSnapshot.childrenCount, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(baseContext, getString(R.string.already_have_account) + "\n $hash", Toast.LENGTH_SHORT).show()
 
                                 setViewWhenDone()
                                 LoginManager.getInstance().logOut()
@@ -221,14 +224,16 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun createHashValue(email: String): String {
-//        TODO("검사하기")
         var hash = ""
-        val sh = MessageDigest.getInstance(getString(R.string.sha_256))
-        val byteData = sh.digest()
+        val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val signatures = info.signingInfo.apkContentsSigners
+        val md = MessageDigest.getInstance(getString(R.string.sha_256))
         val sb = StringBuffer()
-
-        Observable.fromIterable(byteData.toList()).subscribe { byte ->
-            sb.append(((byte and 0xff.toByte()) + 0x100.toByte()).toString().substring(1))
+        for (signature in signatures) {
+            md.update(signature.toByteArray())
+            val value = String(Base64.encode(md.digest(), 0))
+            sb.append(value)
+//            Log.d("Hash key:", "!!!!!!!$key!!!!!!")
         }
         hash = sb.toString()
         return when(email == ""){
@@ -256,7 +261,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.d("LoginActivity Result", "Got result")
+//        Log.d("LoginActivity Result", "Got result")
         callbackManager.onActivityResult(requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == SIGN_IN_REQUEST_CODE) {

@@ -64,6 +64,7 @@ public class UserModel implements Parcelable {
         comment = parcel.readString();
         uid = parcel.readString();
         pushToken = parcel.readString();
+        hash = parcel.readString();
     }
 
     public static final Parcelable.Creator CREATOR = new Parcelable.Creator(){
@@ -110,5 +111,9 @@ public class UserModel implements Parcelable {
 
     public String getPushToken(){
         return pushToken;
+    }
+
+    public String getHash(){
+        return hash;
     }
 }
