@@ -27,7 +27,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.system.exitProcess
 
-class MainActivityKt : AppCompatActivity(), MainFragmentCallBack {
+class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private lateinit var binding : ActivityMainBinding
     private lateinit var dbInstance : FirebaseDatabase
     private lateinit var uid : String

@@ -13,9 +13,9 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders = [
-                pushbots_app_id               : "5d6fb119b79412562f771c36",
-                pushbots_loglevel             : "DEBUG",
-                google_sender_id              : "740476548054"
+                pushbots_app_id  : "5d6fb119b79412562f771c36",
+                pushbots_loglevel: "DEBUG",
+                google_sender_id : "740476548054"
         ]
     }
     buildTypes {

@@ -57,7 +57,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
                 val user = auth.currentUser
                 if(user != null){
 //                    Log.d("AuthStateListener","User not null")
-                    val intent = Intent(applicationContext, MainActivityKt::class.java)
+                    val intent = Intent(applicationContext, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                     startActivity(intent)
                     finish()
@@ -233,7 +233,6 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
             md.update(signature.toByteArray())
             val value = String(Base64.encode(md.digest(), 0))
             sb.append(value)
-//            Log.d("Hash key:", "!!!!!!!$key!!!!!!")
         }
         hash = sb.toString()
         return when(email == ""){
