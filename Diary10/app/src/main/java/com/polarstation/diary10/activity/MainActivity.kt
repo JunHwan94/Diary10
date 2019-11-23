@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -14,10 +15,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityMainBinding
-import com.polarstation.diary10.fragment.AccountFragment
-import com.polarstation.diary10.fragment.ListFragment
-import com.polarstation.diary10.fragment.MainFragmentCallBack
-import com.polarstation.diary10.fragment.WriteFragment
+import com.polarstation.diary10.fragment.*
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
@@ -26,6 +24,9 @@ import kotlinx.coroutines.runBlocking
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.system.exitProcess
+import rx.Observable
+import rx.Single
+import rx.Subscriber
 
 class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private lateinit var binding : ActivityMainBinding
@@ -35,7 +36,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private var netStat : Int? = null
     private var writeType : Int? = null
 
-    private lateinit var listFragment : ListFragment
+    private lateinit var listFragment : ListFragmentKt
     private lateinit var createDiaryFragment : WriteFragment
     private lateinit var writeFragment : WriteFragment
     private lateinit var accountFragment : AccountFragment
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
 
         setViewWhenLoading()
 
-        listFragment = ListFragment()
+        listFragment = ListFragmentKt()
         createDiaryFragment = WriteFragment()
         writeFragment = WriteFragment()
         accountFragment = AccountFragment()

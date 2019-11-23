@@ -45,8 +45,6 @@ import androidx.fragment.app.Fragment;
 import static com.polarstation.diary10.activity.EditAccountActivity.COMMENT_KEY;
 import static com.polarstation.diary10.activity.EditAccountActivity.NAME_KEY;
 import static com.polarstation.diary10.activity.EditAccountActivity.URI_KEY;
-import static com.polarstation.diary10.activity.MainActivity.PUSH_TOKEN;
-import static com.polarstation.diary10.activity.MainActivity.USER_MODEL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class AccountFragment extends Fragment implements View.OnClickListener{
@@ -69,6 +67,8 @@ public class AccountFragment extends Fragment implements View.OnClickListener{
     public static final String FRAGMENT_TYPE_KEY = "fragmentTypeKey";
     public static final String MY_DIARY = "myDiary";
     public static final String LIKED_DIARY = "likedDiary";
+    public static final String USER_MODEL_KEY = "userModelKey";
+    public static final String PUSH_TOKEN = "pushToken";
 
     @Nullable
     @Override

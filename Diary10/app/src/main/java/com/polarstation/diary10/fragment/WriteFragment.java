@@ -57,10 +57,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static com.polarstation.diary10.activity.MainActivity.LIST_KEY;
-import static com.polarstation.diary10.activity.MainActivity.NEW_DIARY_TYPE;
-import static com.polarstation.diary10.activity.MainActivity.NEW_PAGE_TYPE;
-import static com.polarstation.diary10.activity.MainActivity.TYPE_KEY;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
@@ -81,10 +77,14 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private boolean isImageChanged;
     private Context context;
 
-    public static final int LIST_TYPE = 0;
-    public static final int CREATE_TYPE = 1;
-    public static final int WRITE_TYPE= 2;
-    public static final int ACCOUNT_TYPE = 3;
+    private static final int NEW_DIARY_TYPE = 0;
+    private static final int NEW_PAGE_TYPE = 1;
+    private static final String TYPE_KEY = "typeKey";
+    private static final String LIST_KEY = "listKey";
+    private static final int LIST_TYPE = 10;
+    private static final int CREATE_TYPE = 11;
+    private static final int WRITE_TYPE= 12;
+    private static final int ACCOUNT_TYPE = 13;
 
     @Nullable
     @Override
