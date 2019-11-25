@@ -1,12 +1,11 @@
 package com.polarstation.diary10.activity
 
 import android.app.Activity
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -15,18 +14,26 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityMainBinding
-import com.polarstation.diary10.fragment.*
+import com.polarstation.diary10.fragment.AccountFragment
+import com.polarstation.diary10.fragment.ListFragment
+import com.polarstation.diary10.fragment.MainFragmentCallBack
+import com.polarstation.diary10.fragment.WriteFragment
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.system.exitProcess
-import rx.Observable
-import rx.Single
-import rx.Subscriber
+
+const val NEW_DIARY_TYPE = 0
+const val NEW_PAGE_TYPE = 1
+const val TYPE_KEY = "typeKey"
+const val LIST_KEY = "listKey"
+const val PUSH_TOKEN = "pushToken"
+const val LIST_TYPE = 10
+const val CREATE_TYPE = 11
+const val WRITE_TYPE = 12
+const val ACCOUNT_TYPE = 13
 
 class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private lateinit var binding : ActivityMainBinding
@@ -36,21 +43,12 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private var netStat : Int? = null
     private var writeType : Int? = null
 
-    private lateinit var listFragment : ListFragmentKt
+    private lateinit var listFragment : ListFragment
     private lateinit var createDiaryFragment : WriteFragment
     private lateinit var writeFragment : WriteFragment
     private lateinit var accountFragment : AccountFragment
     private lateinit var createOrWriteFragment : WriteFragment
 
-    val NEW_DIARY_TYPE = 0
-    val NEW_PAGE_TYPE = 1
-    val TYPE_KEY = "typeKey"
-    val LIST_KEY = "listKey"
-    val PUSH_TOKEN = "pushToken"
-    val LIST_TYPE = 10
-    val CREATE_TYPE = 11
-    val WRITE_TYPE = 12
-    val ACCOUNT_TYPE = 13
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +60,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
 
         setViewWhenLoading()
 
-        listFragment = ListFragmentKt()
+        listFragment = ListFragment()
         createDiaryFragment = WriteFragment()
         writeFragment = WriteFragment()
         accountFragment = AccountFragment()
@@ -133,7 +131,6 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                                 job.start()
                             } else{ // 없을 때
                                 writeType = NEW_DIARY_TYPE
-                                bundle.putInt(TYPE_KEY, writeType!!)
                                 createDiaryFragment.arguments = bundle
                                 createOrWriteFragment = createDiaryFragment
                             }
@@ -153,14 +150,17 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                 supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, listFragment).commit()
             }
             CREATE_TYPE -> {
+                binding.mainActivityBottomNavigationView.selectedItemId = R.id.action_write
                 supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, createDiaryFragment).commit()
             }
             WRITE_TYPE -> {
+                binding.mainActivityBottomNavigationView.selectedItemId = R.id.action_write
                 supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, writeFragment).commit()
                 setViewWhenDone()
             }
             ACCOUNT_TYPE -> {
                 Toast.makeText(baseContext, getString(R.string.uploaded), Toast.LENGTH_LONG).show()
+                binding.mainActivityBottomNavigationView.selectedItemId = R.id.action_account
                 supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, accountFragment).commit()
                 setViewWhenDone()
             }

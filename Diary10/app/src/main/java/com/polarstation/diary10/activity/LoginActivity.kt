@@ -28,9 +28,7 @@ import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityLoginBinding
 import com.polarstation.diary10.model.UserModel
 import com.polarstation.diary10.util.NetworkStatus
-import io.reactivex.Observable
 import java.security.MessageDigest
-import kotlin.experimental.and
 
 class LoginActivity : BaseActivity(), View.OnClickListener {
     private lateinit var binding : ActivityLoginBinding
@@ -57,8 +55,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
                 val user = auth.currentUser
                 if(user != null){
 //                    Log.d("AuthStateListener","User not null")
-                    val intent = Intent(applicationContext, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    val intent = Intent(applicationContext, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP }
                     startActivity(intent)
                     finish()
                 }else

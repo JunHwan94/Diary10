@@ -96,4 +96,7 @@
 
     <string name="admob_app_id" translatable="false">ca-app-pub-4270520106393473~2766393943</string>
     <string name="admob_banner_id" translatable="false">ca-app-pub-4270520106393473/5781560128</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

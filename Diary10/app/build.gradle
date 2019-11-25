@@ -7,7 +7,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.polarstation.diary10"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 8
         versionName "1.0"
@@ -28,8 +28,8 @@ android {
         enabled true
     }
     compileOptions {
-        sourceCompatibility = '1.8'
-        targetCompatibility = '1.8'
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 

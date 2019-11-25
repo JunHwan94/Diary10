@@ -28,8 +28,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.gson.Gson;
-import com.polarstation.diary10.activity.BaseActivity;
 import com.polarstation.diary10.R;
+import com.polarstation.diary10.activity.BaseActivity;
 import com.polarstation.diary10.databinding.FragmentWriteBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.NotificationModel;
@@ -57,6 +57,12 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static com.polarstation.diary10.activity.MainActivityKt.ACCOUNT_TYPE;
+import static com.polarstation.diary10.activity.MainActivityKt.LIST_KEY;
+import static com.polarstation.diary10.activity.MainActivityKt.LIST_TYPE;
+import static com.polarstation.diary10.activity.MainActivityKt.NEW_DIARY_TYPE;
+import static com.polarstation.diary10.activity.MainActivityKt.NEW_PAGE_TYPE;
+import static com.polarstation.diary10.activity.MainActivityKt.TYPE_KEY;
 import static com.polarstation.diary10.fragment.AccountFragment.PICK_FROM_ALBUM_CODE;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
@@ -76,15 +82,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
     private int netStat;
     private boolean isImageChanged;
     private Context context;
-
-    private static final int NEW_DIARY_TYPE = 0;
-    private static final int NEW_PAGE_TYPE = 1;
-    private static final String TYPE_KEY = "typeKey";
-    private static final String LIST_KEY = "listKey";
-    private static final int LIST_TYPE = 10;
-    private static final int CREATE_TYPE = 11;
-    private static final int WRITE_TYPE= 12;
-    private static final int ACCOUNT_TYPE = 13;
 
     @Nullable
     @Override
@@ -200,12 +197,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                                         .addListenerForSingleValueEvent(new ValueEventListener() {
                                                             @Override
                                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                                                                String key = null;
-//                                                                for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//                                                                    DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
-//                                                                    if (diaryModel.getUid().equals(uid))
-//                                                                        key = snapshot.getKey();
-//                                                                }
                                                                 // RxJava
                                                                 Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot ->
                                                                         snapshot.getValue(DiaryModel.class).getUid().equals(uid)
@@ -245,15 +236,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                                     .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
                                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                                            DiaryModel diaryModel = null;
-//                                            String diaryKey = "";
-//                                            for(DataSnapshot item : dataSnapshot.getChildren()) {
-//                                                diaryModel = item.getValue(DiaryModel.class);
-//                                                if (diaryModel.getTitle().equals(titleOfDiary)) {
-//                                                    diaryKey = item.getKey();
-//                                                    break;
-//                                                }
-//                                            }
                                             // RxJava
                                             Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot ->
                                                 snapshot.getValue(DiaryModel.class).getTitle().equals(titleOfDiary)
@@ -351,26 +333,6 @@ public class WriteFragment extends Fragment implements View.OnClickListener{
                         DiaryModel diaryModel = dataSnapshot.getValue(DiaryModel.class);
                         Map<String, Boolean> likeUsers = diaryModel.getLikeUsers();
 
-//                        for(String user : likeUsers.keySet()){
-////                            Log.d("FCM, destUid", user);
-//                            if(likeUsers.get(user)) {
-////                                Log.d("FCM, like?", likeUsers.get(user)+"");
-//                                dbInstance.getReference().child(getString(R.string.fdb_users)).child(user)
-//                                        .addListenerForSingleValueEvent(new ValueEventListener() {
-//                                            @Override
-//                                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
-//                                                String titleOfDiary = binding.writeFragmentSpinner.getSelectedItem().toString();
-//                                                sendRequest(context, destinationUserModel, titleOfDiary);
-//                                            }
-//
-//                                            @Override
-//                                            public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//                                            }
-//                                        });
-//                            }
-//                        }
                         // RxJava
                         Observable.fromIterable(likeUsers.keySet()).filter(user ->
                             likeUsers.get(user)

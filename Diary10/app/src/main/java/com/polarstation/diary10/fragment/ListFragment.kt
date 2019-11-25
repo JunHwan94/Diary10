@@ -26,7 +26,7 @@ import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
 import io.reactivex.Observable
 
-class ListFragmentKt : Fragment(), View.OnClickListener {
+class ListFragment : Fragment(), View.OnClickListener {
     private lateinit var binding : FragmentListBinding
     private var netStat : Int? = null
     private lateinit var dbInstance : FirebaseDatabase
@@ -73,13 +73,12 @@ class ListFragmentKt : Fragment(), View.OnClickListener {
     private fun setAdapterListener(adapter: DiaryRecyclerViewAdapter){
         adapter.setOnItemClickListener{ _, _, position ->
             val diaryModel = adapter.getItem(position)
-            val intent = Intent(context, DiaryActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-
-            intent.putExtra(DIARY_KEY_KEY, diaryModel.key)
-            intent.putExtra(TITLE_KEY, diaryModel.title)
-            intent.putExtra(WRITER_UID_KEY, diaryModel.uid)
-            intent.putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
+            val intent = Intent(context, DiaryActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(DIARY_KEY_KEY, diaryModel.key)
+                putExtra(TITLE_KEY, diaryModel.title)
+                putExtra(WRITER_UID_KEY, diaryModel.uid)
+                putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
+            }
             startActivity(intent)
         }
     }
@@ -155,8 +154,10 @@ class ListFragmentKt : Fragment(), View.OnClickListener {
             }
             R.id.listFragment_refreshButton -> {
                 loadDiaries()
-                binding.listFragmentSearchEditText.text.clear()
-                binding.listFragmentSearchEditText.clearFocus()
+                binding.listFragmentSearchEditText.apply {
+                    text.clear()
+                    clearFocus()
+                }
             }
         }
     }
