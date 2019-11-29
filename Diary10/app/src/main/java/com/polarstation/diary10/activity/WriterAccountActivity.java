@@ -33,10 +33,10 @@ import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
 
 import static com.polarstation.diary10.fragment.AccountFragment.URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.WRITER_UID_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class WriterAccountActivity extends BaseActivity implements View.OnClickListener{

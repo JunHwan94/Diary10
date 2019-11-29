@@ -26,6 +26,11 @@ import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
 import io.reactivex.Observable
 
+const val TITLE_KEY = "titleKey"
+const val WRITER_UID_KEY = "writerKey"
+const val IMAGE_URL_KEY = "imageUrlKey"
+const val DIARY_KEY_KEY ="diaryKeyKey"
+
 class ListFragment : Fragment(), View.OnClickListener {
     private lateinit var binding : FragmentListBinding
     private var netStat : Int? = null
@@ -33,11 +38,6 @@ class ListFragment : Fragment(), View.OnClickListener {
     private lateinit var uid : String
     private lateinit var adapter : DiaryRecyclerViewAdapter
     private lateinit var diaryModelList : ArrayList<DiaryModel>
-
-    val TITLE_KEY = "titleKey"
-    val WRITER_UID_KEY = "writerKey"
-    val IMAGE_URL_KEY = "imageUrlKey"
-    val DIARY_KEY_KEY ="diaryKeyKey"
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -91,12 +91,19 @@ class ListFragment : Fragment(), View.OnClickListener {
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             diaryModelList.clear()
-                            Observable.fromIterable(dataSnapshot.children).filter{snapshot ->
-                                snapshot.getValue(DiaryModel::class.java)!!.uid != uid
-                            }.subscribe{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
-                                diaryModelList.add(diaryModel)
-                            }
+//                            GlobalScope.launch {
+//                                sequence { yieldAll(dataSnapshot.children) }
+//                                        .filter { it.child(getString(R.string.fdb_uid)).toString() != uid }
+//                                        .map { it.getValue(DiaryModel::class.java)!! }
+//                                        .forEach { diaryModelList.add(it) }
+                            Observable.fromIterable(dataSnapshot.children)
+                                    .filter{ it.getValue(DiaryModel::class.java)!!.uid != uid }
+                                    .subscribe{snapshot ->
+                                        val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
+                                        diaryModelList.add(diaryModel)
+
+                                    }
+
                             adapter.addAll(diaryModelList)
                             adapter.notifyDataSetChanged()
 

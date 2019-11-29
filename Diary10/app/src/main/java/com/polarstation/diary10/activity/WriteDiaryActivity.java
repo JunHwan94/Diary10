@@ -1,10 +1,5 @@
 package com.polarstation.diary10.activity;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import gun0912.tedkeyboardobserver.TedKeyboardObserver;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -34,10 +29,15 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import gun0912.tedkeyboardobserver.TedKeyboardObserver;
+
 import static com.polarstation.diary10.activity.DiaryActivity.IS_COVER_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.CONTENT_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.EDIT_DIARY_CODE;
 import static com.polarstation.diary10.fragment.PageFragment.IS_NEW_KEY;

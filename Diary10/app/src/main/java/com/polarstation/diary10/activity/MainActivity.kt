@@ -17,7 +17,7 @@ import com.polarstation.diary10.databinding.ActivityMainBinding
 import com.polarstation.diary10.fragment.AccountFragment
 import com.polarstation.diary10.fragment.ListFragment
 import com.polarstation.diary10.fragment.MainFragmentCallBack
-import com.polarstation.diary10.fragment.WriteFragment
+import com.polarstation.diary10.fragment.WriteFragmentKt
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
@@ -44,10 +44,10 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private var writeType : Int? = null
 
     private lateinit var listFragment : ListFragment
-    private lateinit var createDiaryFragment : WriteFragment
-    private lateinit var writeFragment : WriteFragment
+    private lateinit var createDiaryFragment : WriteFragmentKt
+    private lateinit var writeFragment : WriteFragmentKt
     private lateinit var accountFragment : AccountFragment
-    private lateinit var createOrWriteFragment : WriteFragment
+    private lateinit var createOrWriteFragment : WriteFragmentKt
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,10 +61,10 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         setViewWhenLoading()
 
         listFragment = ListFragment()
-        createDiaryFragment = WriteFragment()
-        writeFragment = WriteFragment()
+        createDiaryFragment = WriteFragmentKt()
+        writeFragment = WriteFragmentKt()
         accountFragment = AccountFragment()
-        createOrWriteFragment = WriteFragment()
+        createOrWriteFragment = WriteFragmentKt()
         findMyDiary()
 
         supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, listFragment).commit()
@@ -112,11 +112,12 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                             val diaryTitleList = ArrayList<String>()
                             val job = runBlocking {
                                 GlobalScope.launch {
-                                    dataSnapshot.children.forEach { item ->
-                                        val diaryModel = item.getValue(DiaryModel::class.java)!!
-                                        val title = diaryModel.title
-                                        diaryTitleList.add(title)
-                                    }
+                                    sequence{ yieldAll(dataSnapshot.children) }
+                                            .forEach {
+                                                val diaryModel = it.getValue(DiaryModel::class.java)!!
+                                                val title = diaryModel.title
+                                                diaryTitleList.add(title)
+                                            }
 
                                     diaryTitleList.sort()
                                     bundle.putStringArrayList(LIST_KEY, diaryTitleList)
@@ -131,6 +132,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                                 job.start()
                             } else{ // 없을 때
                                 writeType = NEW_DIARY_TYPE
+                                bundle.putInt(TYPE_KEY, writeType!!)
                                 createDiaryFragment.arguments = bundle
                                 createOrWriteFragment = createDiaryFragment
                             }

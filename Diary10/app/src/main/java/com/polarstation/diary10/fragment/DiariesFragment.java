@@ -14,9 +14,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.polarstation.diary10.R;
 import com.polarstation.diary10.activity.DiaryActivity;
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter;
-import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.FragmentDiariesBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.util.NetworkStatus;
@@ -35,10 +35,10 @@ import io.reactivex.Observable;
 import static com.polarstation.diary10.fragment.AccountFragment.FRAGMENT_TYPE_KEY;
 import static com.polarstation.diary10.fragment.AccountFragment.LIKED_DIARY;
 import static com.polarstation.diary10.fragment.AccountFragment.MY_DIARY;
-import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.WRITER_UID_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class DiariesFragment extends Fragment {

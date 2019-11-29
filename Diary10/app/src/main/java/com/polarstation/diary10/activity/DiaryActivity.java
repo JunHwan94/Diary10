@@ -1,13 +1,5 @@
 package com.polarstation.diary10.activity;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import io.reactivex.Observable;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -29,11 +21,19 @@ import com.polarstation.diary10.util.NetworkStatus;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import io.reactivex.Observable;
+
 import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
-import static com.polarstation.diary10.fragment.ListFragment.IMAGE_URL_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.DIARY_KEY_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.TITLE_KEY;
-import static com.polarstation.diary10.fragment.ListFragment.WRITER_UID_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
+import static com.polarstation.diary10.fragment.ListFragmentKt.WRITER_UID_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.EDIT_DIARY_CODE;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
