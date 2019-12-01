@@ -6,11 +6,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
@@ -93,7 +92,7 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
         public void setItem(DiaryModel diaryModel){
             Glide.with(itemView.getContext())
                     .load(diaryModel.getCoverImageUrl())
-                    .apply(new RequestOptions().centerCrop().override(250,300))
+                    .apply(new RequestOptions().centerCrop().override(250,300).diskCacheStrategy(DiskCacheStrategy.NONE))
                     .listener(new RequestListener<Drawable>() {
                         @Override
                         public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -103,7 +102,7 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
                         @Override
                         public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                             Animation fadeIn = AnimationUtils.loadAnimation(itemView.getContext(), R.anim.fade_in);
-                            binding.diaryItemTitleTextView.setVisibility(View.VISIBLE);
+                            binding.diaryItemParentCardView.setVisibility(View.VISIBLE);
                             itemView.startAnimation(fadeIn);
                             return false;
                         }

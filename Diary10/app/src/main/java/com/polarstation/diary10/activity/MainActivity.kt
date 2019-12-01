@@ -22,7 +22,6 @@ import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
 const val NEW_DIARY_TYPE = 0
@@ -41,7 +40,6 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private lateinit var uid : String
     private lateinit var bundle : Bundle
     private var netStat : Int? = null
-    private var writeType : Int? = null
 
     private lateinit var listFragment : ListFragment
     private lateinit var createDiaryFragment : WriteFragmentKt
@@ -61,14 +59,11 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         setViewWhenLoading()
 
         listFragment = ListFragment()
-        createDiaryFragment = WriteFragmentKt()
-        writeFragment = WriteFragmentKt()
         accountFragment = AccountFragment()
-        createOrWriteFragment = WriteFragmentKt()
         findMyDiary()
 
         supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, listFragment).commit()
-        setNavigationViewListener()
+
         sendPushToken()
     }
 
@@ -110,7 +105,8 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                     .addValueEventListener(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             val diaryTitleList = ArrayList<String>()
-                            val job = runBlocking {
+                            // 내 일기장이 있을 때
+                            if(0 < dataSnapshot.childrenCount){
                                 GlobalScope.launch {
                                     sequence{ yieldAll(dataSnapshot.children) }
                                             .forEach {
@@ -118,25 +114,12 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                                                 val title = diaryModel.title
                                                 diaryTitleList.add(title)
                                             }
-
                                     diaryTitleList.sort()
-                                    bundle.putStringArrayList(LIST_KEY, diaryTitleList)
-                                    writeFragment.arguments = bundle
-                                    createOrWriteFragment = writeFragment
+                                    createOrWriteFragment = WriteFragmentKt.newInstance(TYPE_KEY, NEW_PAGE_TYPE, LIST_KEY, diaryTitleList)
                                 }
-                            }
-                            // 내 일기장이 있을 때
-                            if(0 < dataSnapshot.childrenCount){
-                                writeType = NEW_PAGE_TYPE
-                                bundle.putInt(TYPE_KEY, writeType!!)
-                                job.start()
-                            } else{ // 없을 때
-                                writeType = NEW_DIARY_TYPE
-                                bundle.putInt(TYPE_KEY, writeType!!)
-                                createDiaryFragment.arguments = bundle
-                                createOrWriteFragment = createDiaryFragment
-                            }
+                            } else createOrWriteFragment = WriteFragmentKt.newInstance(TYPE_KEY, NEW_DIARY_TYPE) // 없을 때
                             setViewWhenDone()
+                            setNavigationViewListener()
                         }
 
                         override fun onCancelled(p0: DatabaseError) {}
@@ -148,7 +131,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         setNavigationViewListener()
         when(type){
             LIST_TYPE -> {
-                binding.mainActivityBottomNavigationView.setSelectedItemId(R.id.action_list)
+                binding.mainActivityBottomNavigationView.selectedItemId = R.id.action_list
                 supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, listFragment).commit()
             }
             CREATE_TYPE -> {
@@ -161,10 +144,12 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                 setViewWhenDone()
             }
             ACCOUNT_TYPE -> {
-                Toast.makeText(baseContext, getString(R.string.uploaded), Toast.LENGTH_LONG).show()
-                binding.mainActivityBottomNavigationView.selectedItemId = R.id.action_account
-                supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, accountFragment).commit()
-                setViewWhenDone()
+                runOnUiThread {
+                    Toast.makeText(baseContext, getString(R.string.uploaded), Toast.LENGTH_LONG).show()
+                    binding.mainActivityBottomNavigationView.selectedItemId = R.id.action_account
+                    supportFragmentManager.beginTransaction().replace(R.id.mainActivity_frameLayout, accountFragment).commit()
+                    setViewWhenDone()
+                }
             }
         }
     }
