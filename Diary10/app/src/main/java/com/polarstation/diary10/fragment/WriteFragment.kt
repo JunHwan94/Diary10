@@ -50,7 +50,7 @@ const val CONTEXT_SECOND_LINE_KEY = "secondLine"
 const val PREFERENCE = "pref"
 const val PICK_FROM_ALBUM_CODE = 100
 
-class WriteFragmentKt : Fragment(), View.OnClickListener {
+class WriteFragment : Fragment(), View.OnClickListener {
     private lateinit var binding : FragmentWriteBinding
     private lateinit var strInstance : FirebaseStorage
     private lateinit var dbInstance : FirebaseDatabase
@@ -119,13 +119,13 @@ class WriteFragmentKt : Fragment(), View.OnClickListener {
             }
             NEW_PAGE_TYPE -> {
                 val diaryTitleList = bundle.getStringArrayList(LIST_KEY)
-                setSpinner(diaryTitleList)
+                setSpinner(diaryTitleList!!)
             }
         }
     }
 
-    private fun setSpinner(diaryTitleList: ArrayList<String>?) {
-        val spinnerAdapter = ArrayAdapter<String>(context, android.R.layout.simple_spinner_dropdown_item, diaryTitleList)
+    private fun setSpinner(diaryTitleList: ArrayList<String>) {
+        val spinnerAdapter = ArrayAdapter<String>(context!!, android.R.layout.simple_spinner_dropdown_item, diaryTitleList)
         binding.writeFragmentSpinner.adapter = spinnerAdapter
     }
 
@@ -254,7 +254,7 @@ class WriteFragmentKt : Fragment(), View.OnClickListener {
                                                 .addListenerForSingleValueEvent(object : ValueEventListener{
                                                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                                                         val destUserModel = dataSnapshot.getValue(UserModel::class.java)!!
-                                                        sendRequest(destUserModel, binding.writeFragmentSpinner.selectedItem.toString())
+                                                        sendRequest(context!!, destUserModel, binding.writeFragmentSpinner.selectedItem.toString(), callbackOptional)
                                                     }
 
                                                     override fun onCancelled(p0: DatabaseError) {}
@@ -269,34 +269,34 @@ class WriteFragmentKt : Fragment(), View.OnClickListener {
                 })
     }
 
-    private fun sendRequest(destUserModel: UserModel, titleOfDiary: String){
-        val gson = Gson()
-        val userName = FirebaseAuth.getInstance().currentUser!!.displayName
-        val title = getString(R.string.fcm_title)
-        val text = userName + "님의 $titleOfDiary "
-
-        val notificationModel = NotificationModel(destUserModel.pushToken)
-        notificationModel.data.setTitle(title)
-        notificationModel.data.setText(text)
-
-        val requestBody = RequestBody.create(MediaType.parse(getString(R.string.media_type)), gson.toJson(notificationModel))
-        val request = Request.Builder()
-                .header(getString(R.string.request_header_content_type), getString(R.string.request_header_content_type_value))
-                .addHeader(getString(R.string.request_header_authorization), getString(R.string.request_header_authorization_value))
-                .url(getString(R.string.fcm_send_url))
-                .post(requestBody)
-                .build()
-
-        val okHttpClient = OkHttpClient()
-        okHttpClient.newCall(request).enqueue(object : Callback{
-            override fun onResponse(call: Call, response: Response) {
-                Log.d("OkHttp", response.toString())
-                callbackOptional.get().replaceFragment(ACCOUNT_TYPE) // runOnUiThread
-            }
-
-            override fun onFailure(call: Call, e: IOException) { e.printStackTrace() }
-        })
-    }
+//    fun sendRequest(destUserModel: UserModel, titleOfDiary: String){
+//        val gson = Gson()
+//        val userName = FirebaseAuth.getInstance().currentUser!!.displayName
+//        val title = getString(R.string.fcm_title)
+//        val text = userName + "님의 $titleOfDiary "
+//
+//        val notificationModel = NotificationModel(destUserModel.pushToken)
+//        notificationModel.data.setTitle(title)
+//        notificationModel.data.setText(text)
+//
+//        val requestBody = RequestBody.create(MediaType.parse(getString(R.string.media_type)), gson.toJson(notificationModel))
+//        val request = Request.Builder()
+//                .header(getString(R.string.request_header_content_type), getString(R.string.request_header_content_type_value))
+//                .addHeader(getString(R.string.request_header_authorization), getString(R.string.request_header_authorization_value))
+//                .url(getString(R.string.fcm_send_url))
+//                .post(requestBody)
+//                .build()
+//
+//        val okHttpClient = OkHttpClient()
+//        okHttpClient.newCall(request).enqueue(object : Callback{
+//            override fun onResponse(call: Call, response: Response) {
+//                Log.d("OkHttp", response.toString())
+//                callbackOptional.get().replaceFragment(ACCOUNT_TYPE) // runOnUiThread
+//            }
+//
+//            override fun onFailure(call: Call, e: IOException) { e.printStackTrace() }
+//        })
+//    }
 
     private fun saveNewDiary() {
         setViewWhenUploading()
@@ -388,9 +388,9 @@ class WriteFragmentKt : Fragment(), View.OnClickListener {
 
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if(requestCode == PICK_FROM_ALBUM_CODE && resultCode == Activity.RESULT_OK){
-            imageUri = data.data!!
+            imageUri = data!!.data!!
 
             binding.writeFragmentGuideImageView.visibility = View.INVISIBLE
             binding.writeFragmentGuideTextView.visibility = View.INVISIBLE
@@ -413,12 +413,43 @@ class WriteFragmentKt : Fragment(), View.OnClickListener {
     companion object {
         @JvmStatic
         fun newInstance(typeKey: String, writeType: Int, listKey: String = "", sList : ArrayList<String> = arrayListOf()) =
-                WriteFragmentKt().apply {
+                WriteFragment().apply {
                     arguments = Bundle().apply {
-                        Log.d("WriteFragment", "$writeType")
+//                        Log.d("WriteFragment", "$writeType")
                         putInt(typeKey, writeType)
                         putStringArrayList(listKey, sList)
                     }
                 }
+
+        @JvmStatic
+        fun sendRequest(context: Context, destUserModel: UserModel, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>){
+            val gson = Gson()
+            val userName = FirebaseAuth.getInstance().currentUser!!.displayName
+            val title = context.getString(R.string.fcm_title)
+            val text = userName + "님의 $titleOfDiary "
+
+            val notificationModel = NotificationModel(destUserModel.pushToken)
+            notificationModel.data.setTitle(title)
+            notificationModel.data.setText(text)
+
+            val requestBody = RequestBody.create(MediaType.parse(context.getString(R.string.media_type)), gson.toJson(notificationModel))
+            val request = Request.Builder()
+                    .header(context.getString(R.string.request_header_content_type), context.getString(R.string.request_header_content_type_value))
+                    .addHeader(context.getString(R.string.request_header_authorization),context.getString(R.string.request_header_authorization_value))
+                    .url(context.getString(R.string.fcm_send_url))
+                    .post(requestBody)
+                    .build()
+
+            val okHttpClient = OkHttpClient()
+            okHttpClient.newCall(request).enqueue(object : Callback{
+                override fun onResponse(call: Call, response: Response) {
+                    Log.d("OkHttp", response.toString())
+                    if(callbackOptional != Optional.empty<MainFragmentCallBack>())
+                        callbackOptional.get().replaceFragment(ACCOUNT_TYPE) // runOnUiThread
+                }
+
+                override fun onFailure(call: Call, e: IOException) { e.printStackTrace() }
+            })
+        }
     }
 }

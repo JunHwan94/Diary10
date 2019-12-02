@@ -1,24 +1,18 @@
 package com.polarstation.diary10.activity;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
-
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.github.chrisbanes.photoview.PhotoView;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityPhotoViewBinding;
 import com.polarstation.diary10.util.NetworkStatus;
 
-import java.io.InputStream;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
 
-import static com.polarstation.diary10.fragment.AccountFragment.URL_KEY;
+import static com.polarstation.diary10.fragment.AccountFragmentKt.URL_KEY;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
 public class PhotoViewActivity extends AppCompatActivity {

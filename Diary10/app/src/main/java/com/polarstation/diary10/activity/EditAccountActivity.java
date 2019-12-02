@@ -1,13 +1,7 @@
 package com.polarstation.diary10.activity;
 
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import gun0912.tedkeyboardobserver.TedKeyboardObserver;
-
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -26,6 +20,10 @@ import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import gun0912.tedkeyboardobserver.TedKeyboardObserver;
 
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
@@ -168,34 +166,6 @@ public class EditAccountActivity extends BaseActivity implements View.OnClickLis
                             finish();
                         });
                     });
-
                 });
-
-//        Bitmap resizedBitmap = ImageHelper.resize(getBaseContext(), imageUri, 400);
-//        try {
-//            Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-//            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-//            byte[] data = baos.toByteArray();
-//            strInstance.getReference().child(getString(R.string.fstr_user_images)).child(uid).putBytes(data)
-//                    .addOnCompleteListener(task -> {
-//                        strInstance.getReference().child(getString(R.string.fstr_user_images)).child(uid).getDownloadUrl().addOnSuccessListener(uri -> {
-//                            imageUrl = String.valueOf(uri);
-//                            resultIntent.putExtra(URI_KEY, String.valueOf(imageUrl));
-//
-//                            Map<String, Object> stringObjectMap = new HashMap<>();
-//                            stringObjectMap.put(getString(R.string.fdb_profile_image_url), imageUrl);
-//                            dbInstance.getReference().child(getString(R.string.fdb_users)).child(uid).updateChildren(stringObjectMap)
-//                                    .addOnSuccessListener( aVoid -> {
-//                                        resizedBitmap.recycle();
-//                                        setResult(RESULT_OK, resultIntent);
-//                                        finish();
-//                                    });
-//                        });
-//                    });
-//        }catch(Exception e){
-//            e.printStackTrace();
-//        }
-
     }
 }

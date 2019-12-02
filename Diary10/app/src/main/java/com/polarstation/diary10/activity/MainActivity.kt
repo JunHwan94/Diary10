@@ -17,7 +17,7 @@ import com.polarstation.diary10.databinding.ActivityMainBinding
 import com.polarstation.diary10.fragment.AccountFragment
 import com.polarstation.diary10.fragment.ListFragment
 import com.polarstation.diary10.fragment.MainFragmentCallBack
-import com.polarstation.diary10.fragment.WriteFragmentKt
+import com.polarstation.diary10.fragment.WriteFragment
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
@@ -42,10 +42,10 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private var netStat : Int? = null
 
     private lateinit var listFragment : ListFragment
-    private lateinit var createDiaryFragment : WriteFragmentKt
-    private lateinit var writeFragment : WriteFragmentKt
+    private lateinit var createDiaryFragment : WriteFragment
+    private lateinit var writeFragment : WriteFragment
     private lateinit var accountFragment : AccountFragment
-    private lateinit var createOrWriteFragment : WriteFragmentKt
+    private lateinit var createOrWriteFragment : WriteFragment
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,8 +69,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
 
     private fun sendPushToken(){
         val token : String = FirebaseInstanceId.getInstance().token.toString()
-        val map = HashMap<String, Any>()
-        map.put(PUSH_TOKEN, token)
+        val map = HashMap<String, Any>().apply { put(PUSH_TOKEN, token) }
 
         dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).updateChildren(map)
     }
@@ -115,9 +114,9 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
                                                 diaryTitleList.add(title)
                                             }
                                     diaryTitleList.sort()
-                                    createOrWriteFragment = WriteFragmentKt.newInstance(TYPE_KEY, NEW_PAGE_TYPE, LIST_KEY, diaryTitleList)
+                                    createOrWriteFragment = WriteFragment.newInstance(TYPE_KEY, NEW_PAGE_TYPE, LIST_KEY, diaryTitleList)
                                 }
-                            } else createOrWriteFragment = WriteFragmentKt.newInstance(TYPE_KEY, NEW_DIARY_TYPE) // 없을 때
+                            } else createOrWriteFragment = WriteFragment.newInstance(TYPE_KEY, NEW_DIARY_TYPE) // 없을 때
                             setViewWhenDone()
                             setNavigationViewListener()
                         }

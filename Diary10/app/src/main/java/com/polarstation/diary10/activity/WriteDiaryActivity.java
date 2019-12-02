@@ -28,6 +28,7 @@ import com.polarstation.diary10.util.NetworkStatus;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -306,7 +307,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                                 UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
-                                                sendRequest(getBaseContext(), destinationUserModel, titleOfDiary);
+                                                sendRequest(getBaseContext(), destinationUserModel, titleOfDiary, Optional.empty());
                                             }
 
                                             @Override

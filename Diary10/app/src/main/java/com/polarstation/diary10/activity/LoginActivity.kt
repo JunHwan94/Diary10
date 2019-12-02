@@ -221,7 +221,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun createHashValue(email: String): String {
-        var hash = ""
+        var hash: String
         val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val signatures = info.signingInfo.apkContentsSigners
         val md = MessageDigest.getInstance(getString(R.string.sha_256))

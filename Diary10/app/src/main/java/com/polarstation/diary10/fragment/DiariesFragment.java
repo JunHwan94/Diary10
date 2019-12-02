@@ -32,9 +32,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import io.reactivex.Observable;
 
-import static com.polarstation.diary10.fragment.AccountFragment.FRAGMENT_TYPE_KEY;
-import static com.polarstation.diary10.fragment.AccountFragment.LIKED_DIARY;
-import static com.polarstation.diary10.fragment.AccountFragment.MY_DIARY;
+import static com.polarstation.diary10.fragment.AccountFragmentKt.FRAGMENT_TYPE_KEY;
+import static com.polarstation.diary10.fragment.AccountFragmentKt.LIKED_DIARY;
+import static com.polarstation.diary10.fragment.AccountFragmentKt.MY_DIARY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;

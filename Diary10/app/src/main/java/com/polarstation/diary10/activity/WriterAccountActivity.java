@@ -32,7 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import static com.polarstation.diary10.fragment.AccountFragment.URL_KEY;
+import static com.polarstation.diary10.fragment.AccountFragmentKt.URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
