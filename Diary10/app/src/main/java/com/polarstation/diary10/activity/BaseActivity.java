@@ -1,5 +1,6 @@
 package com.polarstation.diary10.activity;
 
+import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,6 +8,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+@SuppressLint("Registered")
 public class BaseActivity extends AppCompatActivity{
     private static Typeface typeface = null;
 

@@ -33,7 +33,7 @@ import com.polarstation.diary10.activity.EditAccountActivity
 import com.polarstation.diary10.activity.PUSH_TOKEN
 import com.polarstation.diary10.activity.PhotoViewActivity
 import com.polarstation.diary10.databinding.FragmentAccountBinding
-import com.polarstation.diary10.model.UserModelKt
+import com.polarstation.diary10.model.UserModel
 import com.polarstation.diary10.util.NetworkStatus
 import io.reactivex.Observable
 import java.util.*
@@ -50,12 +50,12 @@ const val EDIT_COMPLETE_CODE = 101
 
 class AccountFragment : Fragment(), View.OnClickListener {
     private lateinit var binding : FragmentAccountBinding
-    private lateinit var authInstance : FirebaseAuth
-    private lateinit var dbInstance : FirebaseDatabase
+    private val  authInstance : () -> FirebaseAuth = { FirebaseAuth.getInstance() }
+    private val dbInstance : () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
     private lateinit var callbackOptional : Optional<MainFragmentCallBack>
-    private lateinit var uid : String
+    private val uid : () -> String = { authInstance().currentUser!!.uid }
     var isMenuOpened = true
-    private var netStat : Int? = null
+    private var netStat : () -> Int = { NetworkStatus.getConnectivityStatus(context!!) }
     private lateinit var imageUrl : String
     private lateinit var scaleBigger : Animation
     private lateinit var scaleSmaller: Animation
@@ -66,15 +66,10 @@ class AccountFragment : Fragment(), View.OnClickListener {
         BaseActivity.setGlobalFont(binding.root)
 
         isMenuOpened = false
-        netStat = NetworkStatus.getConnectivityStatus(context)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
-            authInstance = FirebaseAuth.getInstance()
-            dbInstance = FirebaseDatabase.getInstance()
-
-            uid = authInstance.currentUser!!.uid
-            dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(object : ValueEventListener{
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
+            dbInstance().reference.child(getString(R.string.fdb_users)).child(uid()).addListenerForSingleValueEvent(object : ValueEventListener{
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val userModel = dataSnapshot.getValue(UserModelKt::class.java)
+                    val userModel = dataSnapshot.getValue(UserModel::class.java)
                     val bundle = Bundle()
                     bundle.putParcelable(USER_MODEL_KEY, userModel)
                     setUserInfo(bundle)
@@ -116,12 +111,12 @@ class AccountFragment : Fragment(), View.OnClickListener {
 
     private fun setDiariesFragment() {
         var bundle = Bundle()
-        val myDiariesFragment = DiariesFragment()
+        val myDiariesFragment = DiariesFragmentKt()
         bundle.putString(FRAGMENT_TYPE_KEY, MY_DIARY)
         myDiariesFragment.arguments = bundle
         bundle = Bundle()
 
-        val likedDiariesFragment = DiariesFragment()
+        val likedDiariesFragment = DiariesFragmentKt()
         bundle.putString(FRAGMENT_TYPE_KEY, LIKED_DIARY)
         likedDiariesFragment.arguments = bundle
 
@@ -141,11 +136,10 @@ class AccountFragment : Fragment(), View.OnClickListener {
     }
 
     private fun setUserInfo(bundle: Bundle) {
-        val userModel : UserModelKt = bundle.getParcelable(USER_MODEL_KEY)!!
+        val userModel : UserModel = bundle.getParcelable(USER_MODEL_KEY)!!
         imageUrl = userModel.profileImageUrl
 
-        netStat = NetworkStatus.getConnectivityStatus(context)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             Glide.with(context)
                     .load(imageUrl)
                     .apply(RequestOptions().circleCrop().override(200,300))
@@ -181,9 +175,9 @@ class AccountFragment : Fragment(), View.OnClickListener {
                 }
             }
             R.id.accountFragment_signOutButton -> {
-                authInstance.signOut()
+                authInstance().signOut()
                 val map = HashMap<String, Any>().apply{ put(PUSH_TOKEN, "") }
-                dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).updateChildren(map)
+                dbInstance().reference.child(getString(R.string.fdb_users)).child(uid()).updateChildren(map)
 
                 LoginManager.getInstance().logOut()
                 AlertDialog.Builder(context).setTitle(getString(R.string.sign_out)).setMessage(getString(R.string.dialog_quit))

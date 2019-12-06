@@ -1,6 +1,7 @@
 package com.polarstation.diary10.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -35,7 +37,7 @@ public class EditAccountActivity extends BaseActivity implements View.OnClickLis
     private String uid;
     private String imageUrl = "";
     private Uri imageUri;
-    private int netStat;
+    private Function<Context, Integer> netStat = context -> NetworkStatus.Companion.getGetConnectivityStatus().invoke(context);
 
     public static final String NAME_KEY = "nameKey";
     public static final String COMMENT_KEY = "commentKey";
@@ -87,8 +89,7 @@ public class EditAccountActivity extends BaseActivity implements View.OnClickLis
                 finish();
                 break;
             case R.id.editAccountActivity_saveButton:
-                netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-                if(netStat == TYPE_CONNECTED) {
+                if(netStat.apply(this) == TYPE_CONNECTED) {
                     String name = String.valueOf(binding.editAccountActivityNameEditText.getText());
                     if (name.equals(""))
                         Toast.makeText(this, getString(R.string.write_name), Toast.LENGTH_SHORT).show();

@@ -26,18 +26,18 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityLoginBinding
-import com.polarstation.diary10.model.UserModelKt
+import com.polarstation.diary10.model.UserModel
 import com.polarstation.diary10.util.NetworkStatus
 import java.security.MessageDigest
 
 class LoginActivity : BaseActivity(), View.OnClickListener {
     private lateinit var binding : ActivityLoginBinding
-    private lateinit var authInstance : FirebaseAuth
+    private val authInstance : () -> FirebaseAuth = { FirebaseAuth.getInstance () }
     private lateinit var authStateListener : FirebaseAuth.AuthStateListener
-    private lateinit var dbInstance : FirebaseDatabase
-    private lateinit var uid : String
+    private val dbInstance : () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
+    private val uid : () -> String = { authInstance().currentUser!!.uid }
 
-    private var netStat : Int? = null
+    private val netStat: () -> Int = { NetworkStatus.getConnectivityStatus(this) }
     private lateinit var callbackManager : CallbackManager
 
     private val SIGN_IN_REQUEST_CODE = 100
@@ -46,11 +46,8 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_login)
 
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             FirebaseApp.initializeApp(this)
-            dbInstance = FirebaseDatabase.getInstance()
-            authInstance = FirebaseAuth.getInstance()
             authStateListener = FirebaseAuth.AuthStateListener { auth ->
                 val user = auth.currentUser
                 if(user != null){
@@ -70,17 +67,16 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
 
     override fun onStart(){
         super.onStart()
-        authInstance.addAuthStateListener(authStateListener)
+        authInstance().addAuthStateListener(authStateListener)
     }
 
     override fun onStop(){
         super.onStop()
-        authInstance.removeAuthStateListener(authStateListener)
+        authInstance().removeAuthStateListener(authStateListener)
     }
 
     private fun googleSignIn() {
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             val gso =
                     GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                             .requestIdToken(getString(R.string.default_web_client_id))
@@ -94,8 +90,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
 
     private fun firebaseAuthWithGoogle(account: GoogleSignInAccount) {
 //        Log.d("FunFAuthWithGmail", "Run Authorizing")
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             setViewWhenLoading()
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
             val userName : String = account.displayName.toString()
@@ -107,9 +102,8 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
 
     private fun processCredential(credential: AuthCredential, userName: String, profileImageUrl: String, email: String) {
 //        Log.d("Fun procCred", "Process Credential")
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
-            authInstance.signInWithCredential(credential)
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
+            authInstance().signInWithCredential(credential)
                     .addOnCompleteListener(this) { task ->
                         if(task.isSuccessful){
                             checkUid(userName, profileImageUrl, email)
@@ -123,16 +117,14 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
 
     private fun checkUid(userName: String, profileImageUrl: String, email: String) {
         val hash = createHashValue(email)
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
-            uid = authInstance.currentUser!!.uid
-            dbInstance.reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
+            dbInstance().reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid())
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             if(dataSnapshot.childrenCount.toInt() == 0){
                                 addUserToDB(userName, profileImageUrl, hash)
                                 val userProfileChangeRequest = UserProfileChangeRequest.Builder().setDisplayName(userName).build()
-                                authInstance.currentUser!!.updateProfile(userProfileChangeRequest)
+                                authInstance().currentUser!!.updateProfile(userProfileChangeRequest)
                             }
                         }
 
@@ -145,27 +137,19 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
 
     private fun addUserToDB(userName: String, profileImageUrl: String, hash: String) {
 //        Log.d("AddUserToDB", "Called")
-        val userModel = UserModelKt(userName, profileImageUrl, uid, hash)
-//                        .Builder()
-//                        .setUserName(userName)
-//                        .setProfileImageUrl(profileImageUrl)
-//                        .setUid(uid)
-//                        .setHash(hash)
-//                        .build()
+        val userModel = UserModel(userName, profileImageUrl, uid(), hash)
 
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if (netStat == NetworkStatus.TYPE_CONNECTED) {
-            dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).setValue(userModel)
+        if (netStat() == NetworkStatus.TYPE_CONNECTED) {
+            dbInstance().reference.child(getString(R.string.fdb_users)).child(uid()).setValue(userModel)
                     .addOnSuccessListener { // aVoid -> 람다식에서 변수가 1개일 때 그것을 쓰지 않으면 지워버림
-                        authInstance.addAuthStateListener(authStateListener)
+                        authInstance().addAuthStateListener(authStateListener)
 //                        Toast.makeText(applicationContext, getString(R.string.auth_success), Toast.LENGTH_SHORT).show()
                     }
         }else Toast.makeText(baseContext, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
     }
 
     private fun setFacebookLogIn() {
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             callbackManager = CallbackManager.Factory.create()
             binding.loginActivityFacebookLoginButton.setReadPermissions(getString(R.string.email))
             binding.loginActivityFacebookLoginButton.setLoginText(getString(R.string.log_in))
@@ -185,8 +169,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun handleFacebookAccessToken(accessToken: AccessToken) {
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             val credential = FacebookAuthProvider.getCredential(accessToken.token)
             val name = Profile.getCurrentProfile().name
             val profileImageUrl = Profile.getCurrentProfile().getProfilePictureUri(300, 300).toString()
@@ -201,7 +184,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
             val email = response.jsonObject.getString(getString(R.string.email))
             if(email == null || email == "") {
                 val hash = createHashValue(email)
-                dbInstance.reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_hash)).equalTo(hash)
+                dbInstance().reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_hash)).equalTo(hash)
                         .addListenerForSingleValueEvent(object : ValueEventListener {
                             override fun onDataChange(dataSnapshot: DataSnapshot) {
                                 if (0 < dataSnapshot.childrenCount) {

@@ -20,11 +20,15 @@ import com.polarstation.diary10.activity.BaseActivity
 import com.polarstation.diary10.activity.DiaryActivity
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter
 import com.polarstation.diary10.databinding.FragmentListBinding
-import com.polarstation.diary10.model.DiaryModelKt
+import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
 import io.reactivex.Observable
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.collections.ArrayList
 
 const val TITLE_KEY = "titleKey"
 const val WRITER_UID_KEY = "writerKey"
@@ -33,22 +37,19 @@ const val DIARY_KEY_KEY ="diaryKeyKey"
 
 class ListFragment : Fragment(), View.OnClickListener {
     private lateinit var binding : FragmentListBinding
-    private var netStat : Int? = null
-    private lateinit var dbInstance : FirebaseDatabase
-    private lateinit var uid : String
+    private val netStat: () -> Int = { NetworkStatus.getConnectivityStatus(context!!) }
+    private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
+    private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
     private lateinit var adapter : DiaryRecyclerViewAdapter
-    private lateinit var diaryModelList : ArrayList<DiaryModelKt>
+    private lateinit var diaryModelList : ArrayList<DiaryModel>
+    private lateinit var callbackOptional: Optional<MainFragmentCallBack>
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_list, container, false)
         Observable.just(binding.root).subscribe{ BaseActivity.setGlobalFont(it) }
 
-        netStat = NetworkStatus.getConnectivityStatus(context)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
-            dbInstance = FirebaseDatabase.getInstance()
-            uid = FirebaseAuth.getInstance().currentUser!!.uid
-
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             adapter = DiaryRecyclerViewAdapter()
             setAdapterListener(adapter)
             binding.listFragmentRecyclerView.layoutManager = GridLayoutManager(context, 3)
@@ -84,28 +85,21 @@ class ListFragment : Fragment(), View.OnClickListener {
     }
 
     private fun loadDiaries() {
-        netStat = NetworkStatus.getConnectivityStatus(context)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             binding.listFragmentProgressBar.visibility = View.VISIBLE
-            dbInstance.reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
+            dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            diaryModelList.clear()
-//                            GlobalScope.launch {
-//                                sequence { yieldAll(dataSnapshot.children) }
-//                                        .filter { it.child(getString(R.string.fdb_uid)).toString() != uid }
-//                                        .map { it.getValue(DiaryModel::class.java)!! }
-//                                        .forEach { diaryModelList.add(it) }
-                            Observable.fromIterable(dataSnapshot.children)
-                                    .filter{ it.getValue(DiaryModelKt::class.java)!!.uid != uid }
-                                    .subscribe{snapshot ->
-                                        val diaryModel = snapshot.getValue(DiaryModelKt::class.java)!!
-                                        diaryModelList.add(diaryModel)
-
-                                    }
-
-                            adapter.addAll(diaryModelList)
-                            adapter.notifyDataSetChanged()
+                            adapter.clear()
+                            GlobalScope.launch {
+                                sequence { yieldAll(dataSnapshot.children) }
+                                        .filter { it.getValue(DiaryModel::class.java)!!.uid != uid() }
+                                        .map { it.getValue(DiaryModel::class.java)!! }
+                                        .forEach {
+                                            adapter.addItem(it)
+                                            callbackOptional.get().notifyAdapter(adapter)
+                                        }
+                            }
 
                             binding.listFragmentProgressBar.visibility = View.INVISIBLE
                         }
@@ -116,18 +110,17 @@ class ListFragment : Fragment(), View.OnClickListener {
     }
 
     private fun searchDiaries(searchWord: String){
-        netStat = NetworkStatus.getConnectivityStatus(context)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
             binding.listFragmentProgressBar.visibility = View.VISIBLE
-            dbInstance.reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
+            dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             diaryModelList.clear()
                             Observable.fromIterable(dataSnapshot.children).filter{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModelKt::class.java)!!
-                                diaryModel.title.contains(searchWord) && diaryModel.uid != uid
+                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
+                                diaryModel.title.contains(searchWord) && diaryModel.uid != uid()
                             }.subscribe{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModelKt::class.java)!!
+                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
                                 diaryModelList.add(diaryModel)
                             }
 
@@ -146,10 +139,13 @@ class ListFragment : Fragment(), View.OnClickListener {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        if(context is MainFragmentCallBack)
+            callbackOptional = Optional.of(context)
     }
 
     override fun onDetach() {
         super.onDetach()
+        callbackOptional = Optional.empty()
     }
 
     override fun onClick(v: View) {

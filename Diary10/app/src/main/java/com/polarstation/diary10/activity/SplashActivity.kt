@@ -29,6 +29,12 @@ class SplashActivity : BaseActivity() {
                 startActivity(intent)
                 finish()
             }
-        }else Toast.makeText(baseContext, getString(R.string.network_not_connected_quit), Toast.LENGTH_SHORT).show()
+        }else {
+            GlobalScope.launch{
+                delay(500)
+                finish()
+            }
+            Toast.makeText(baseContext, getString(R.string.network_not_connected_quit), Toast.LENGTH_SHORT).show()
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.polarstation.diary10.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -22,13 +23,14 @@ import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
-import com.polarstation.diary10.model.UserModelKt;
+import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -61,7 +63,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     private long diaryCreateTime;
     private long pageCreateTime;
     private boolean isNew;
-    private int netStat;
+    private Function<Context, Integer> netStat = context -> NetworkStatus.Companion.getGetConnectivityStatus().invoke(context);
 
     private static final int PICK_FROM_ALBUM_CODE = 100;
 
@@ -173,8 +175,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     }
 
     private void update(String text){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -196,8 +197,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     }
 
     private void uploadImage(String text){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(isNew && netStat == TYPE_CONNECTED) {
+        if(isNew && netStat.apply(this) == TYPE_CONNECTED) {
             setViewWhenUploading();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -224,7 +224,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
 
                         }
                     });
-        }else if(isCover && netStat == TYPE_CONNECTED){
+        }else if(isCover && netStat.apply(this) == TYPE_CONNECTED){
             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).putFile(imageUri)
                     .addOnCompleteListener(task -> {
                         strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(uid).getDownloadUrl()
@@ -237,7 +237,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                 });
 
                     });
-        }else if(netStat == TYPE_CONNECTED){
+        }else if(netStat.apply(this) == TYPE_CONNECTED){
             strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).putFile(imageUri)
                     .addOnCompleteListener(task -> {
                         strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).getDownloadUrl()
@@ -253,15 +253,14 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     }
 
     private void pushPage(String content, long timeStamp, String imageUrl){
-        PageModel pageModel =
-                new PageModel.Builder()
-                        .setContent(content)
-                        .setCreateTime(timeStamp)
-                        .setImageUrl(imageUrl)
-                        .build();
+        PageModel pageModel = new PageModel(content, imageUrl, timeStamp);
+//                new PageModel.Builder()
+//                        .setContent(content)
+//                        .setCreateTime(timeStamp)
+//                        .setImageUrl(imageUrl)
+//                        .build();
 
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_pages)).push().setValue(pageModel)
                     .addOnSuccessListener(aVoid -> {
                         // 저장 후 PageModel key값 바로 업데이트하기
@@ -305,7 +304,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         .addListenerForSingleValueEvent(new ValueEventListener() {
                                             @Override
                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                UserModelKt destinationUserModel = dataSnapshot.getValue(UserModelKt.class);
+                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
                                                 sendRequest(getBaseContext(), destinationUserModel, titleOfDiary, Optional.empty());
                                             }
@@ -329,8 +328,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
     }
 
     private void updateDatabase(String text){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             Map<String, Object> map = new HashMap<>();
             if (isCover) {
                 String title = text;

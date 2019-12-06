@@ -1,6 +1,7 @@
 package com.polarstation.diary10.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -20,6 +21,7 @@ import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,7 +31,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import io.reactivex.Observable;
 
-import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
+//import static com.polarstation.diary10.fragment.DiariesFragment.SHOW_DIARY_CODE;
+import static com.polarstation.diary10.fragment.DiariesFragmentKtKt.SHOW_DIARY_CODE;
 import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
@@ -45,7 +48,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
     private String writerUid;
     private String diaryKey;
     private FirebaseDatabase dbInstance;
-    private int netStat;
+    private Function<Context, Integer> netStat = context -> NetworkStatus.Companion.getGetConnectivityStatus().invoke(context);
     private boolean isDataChanged = false;
 
     public static final String IS_COVER_KEY = "isCoverKey";
@@ -56,8 +59,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_diary);
 
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
             Intent intent = getIntent();
 
@@ -101,8 +103,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
     }
 
     private void loadDiaryCover(ListPagerAdapter pagerAdapter){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             setViewWhenLoading();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -139,8 +140,7 @@ public class DiaryActivity extends AppCompatActivity implements PageFragmentCall
 
     @Override
     public void loadDiary(String key){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             setViewWhenLoading();
             FirebaseDatabase.getInstance().getReference().child(getString(R.string.fdb_diaries)).child(key).child(getString(R.string.fdb_pages)).orderByChild(getString(R.string.fdb_createTime))
                     .addListenerForSingleValueEvent(new ValueEventListener() {

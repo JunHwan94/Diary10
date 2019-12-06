@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.polarstation.diary10.R
+import com.polarstation.diary10.data.DiaryRecyclerViewAdapter
 import com.polarstation.diary10.databinding.ActivityMainBinding
 import com.polarstation.diary10.fragment.AccountFragment
 import com.polarstation.diary10.fragment.ListFragment
@@ -175,5 +176,9 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private fun setViewWhenDone(){
         binding.mainActivityProgressBar.visibility = View.INVISIBLE
         binding.mainActivityBottomNavigationView.isEnabled = true
+    }
+
+    override fun notifyAdapter(adapter: DiaryRecyclerViewAdapter) {
+        runOnUiThread { adapter.notifyDataSetChanged() }
     }
 }

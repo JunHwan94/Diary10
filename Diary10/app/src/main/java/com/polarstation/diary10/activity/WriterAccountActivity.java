@@ -1,5 +1,6 @@
 package com.polarstation.diary10.activity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -21,12 +22,13 @@ import com.google.firebase.database.ValueEventListener;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.databinding.ActivityWriterAccountBinding;
-import com.polarstation.diary10.model.DiaryModelKt;
+import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
@@ -44,15 +46,14 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
     private FirebaseDatabase dbInstance;
     private DiaryRecyclerViewAdapter adapter;
     private String imageUrl;
-    private int netStat;
+    private Function<Context, Integer> netStat = context -> NetworkStatus.Companion.getGetConnectivityStatus().invoke(context);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_writer_account);
 
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
 
             Intent intent = getIntent();
@@ -66,7 +67,7 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
             binding.writerAccountActivityRecyclerView.setLayoutManager(layoutManager);
             adapter = new DiaryRecyclerViewAdapter();
             adapter.setOnItemClickListener((holder, view, position) -> {
-                DiaryModelKt diaryModel = adapter.getItem(position);
+                DiaryModel diaryModel = adapter.getItem(position);
                 Intent diaryActivityIntent = new Intent(getBaseContext(), DiaryActivity.class);
                 diaryActivityIntent.putExtra(TITLE_KEY, diaryModel.getTitle());
                 diaryActivityIntent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
@@ -87,16 +88,15 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
     }
 
     private void loadDiaries(String writerUid) {
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
-            List<DiaryModelKt> diaryModelList = new ArrayList<>();
+        if(netStat.apply(this) == TYPE_CONNECTED) {
+            List<DiaryModel> diaryModelList = new ArrayList<>();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             diaryModelList.clear();
                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                DiaryModelKt diaryModel = snapshot.getValue(DiaryModelKt.class);
+                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
                                 if (diaryModel.getUid().equals(writerUid))
                                     diaryModelList.add(diaryModel);
                             }
@@ -115,8 +115,7 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
     }
 
     private void setUserInfo(String writerUid){
-        netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(this) == TYPE_CONNECTED) {
             dbInstance.getReference().child(getString(R.string.fdb_users)).child(writerUid)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override

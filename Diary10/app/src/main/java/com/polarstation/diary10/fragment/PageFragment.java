@@ -40,6 +40,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -74,7 +75,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private String content;
     private long pageCreateTime;
     private PageFragmentCallback callback;
-    private int netStat;
+    private Function<Context, Integer> netStat = context -> NetworkStatus.Companion.getGetConnectivityStatus().invoke(context);
     private Context context;
     private AdRequest adRequest;
 
@@ -91,8 +92,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
         BaseActivity.setGlobalFont(binding.getRoot());
 
         isMenuOpen = false;
-        netStat = NetworkStatus.getConnectivityStatus(context);
-        if(netStat == TYPE_CONNECTED) {
+        if(netStat.apply(context) == TYPE_CONNECTED) {
             dbInstance = FirebaseDatabase.getInstance();
             strInstance = FirebaseStorage.getInstance();
             adRequest = new AdRequest.Builder().build();
@@ -101,12 +101,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             if (bundle != null)
                 processBundle(bundle);
 
-//            uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-//            if(uid.equals(writerUid)) {
-//                binding.pageFragmentMenuButton.setVisibility(View.VISIBLE);
-//                binding.pageFragmentLikeButton.setVisibility(View.INVISIBLE);
-//                setPopupMenu(binding.pageFragmentMenuButton);
-//            }
             setMenu();
             loadLikeOrNot();
 
@@ -138,8 +132,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     }
 
     private void loadLikeOrNot(){
-        netStat = NetworkStatus.getConnectivityStatus(context);
-        if(netStat == TYPE_CONNECTED && !uid.equals(writerUid)) {
+        if(netStat.apply(context) == TYPE_CONNECTED && !uid.equals(writerUid)) {
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -157,7 +150,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 
                         }
                     });
-        }else if(netStat == TYPE_NOT_CONNECTED && !uid.equals(writerUid))
+        }else if(netStat.apply(context) == TYPE_NOT_CONNECTED && !uid.equals(writerUid))
             Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
 
@@ -175,8 +168,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
             imageUrl = bundle.getString(IMAGE_URL_KEY);
             diaryKey = bundle.getString(DIARY_KEY_KEY);
 
-            netStat = NetworkStatus.getConnectivityStatus(context);
-            if(netStat == TYPE_CONNECTED) {
+            if(netStat.apply(context) == TYPE_CONNECTED) {
                 setWriterAndImage(writerUid);
                 setCoverImageViewSize();
             }else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
@@ -306,12 +298,11 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                 }
                 break;
             case R.id.pageFragment_deleteDiaryButton:
-                netStat = NetworkStatus.getConnectivityStatus(context);
-                if(isCover && netStat == TYPE_CONNECTED){
+                if(isCover && netStat.apply(context) == TYPE_CONNECTED){
                     callback.dataChanges();
                     setViewWhenLoading();
                     deletePictures();
-                }else if(netStat == TYPE_CONNECTED){
+                }else if(netStat.apply(context) == TYPE_CONNECTED){
                     callback.dataChanges();
                     setViewWhenLoading();
                     deletePicture();
@@ -375,8 +366,6 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                                                 callback.finishDiaryActivity();
                                             })
                                 );
-
-
                     }
 
                     @Override
@@ -427,8 +416,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private void processLike(boolean like){
         Map<String, Object> map = new HashMap<>();
         map.put(uid, like);
-        netStat = NetworkStatus.getConnectivityStatus(context);
-        if(netStat == TYPE_CONNECTED)
+        if(netStat.apply(context) == TYPE_CONNECTED)
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).child(diaryKey).child(getString(R.string.fdb_like_users)).updateChildren(map);
         else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show();
     }
@@ -457,7 +445,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 //            popupMenu.setOnMenuItemClickListener(item -> {
 //                switch(item.getItemId()){
 //                    case R.id.delete:
-//                        netStat = NetworkStatus.getConnectivityStatus(context);
+//                        netStat = NetworkStatus.getGetConnectivityStatus(context);
 //                        if(netStat == TYPE_CONNECTED) {
 //                            callback.dataChanges();
 //                            setViewWhenLoading();
@@ -483,7 +471,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
 //            popupMenu.setOnMenuItemClickListener(item -> {
 //                switch(item.getItemId()){
 //                    case R.id.delete:
-//                        netStat = NetworkStatus.getConnectivityStatus(context);
+//                        netStat = NetworkStatus.getGetConnectivityStatus(context);
 //                        if(netStat == TYPE_CONNECTED) {
 //                            callback.dataChanges();
 //                            setViewWhenLoading();
