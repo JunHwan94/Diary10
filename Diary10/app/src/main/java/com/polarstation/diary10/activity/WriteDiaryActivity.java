@@ -22,7 +22,7 @@ import com.polarstation.diary10.R;
 import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding;
 import com.polarstation.diary10.model.DiaryModel;
 import com.polarstation.diary10.model.PageModel;
-import com.polarstation.diary10.model.UserModel;
+import com.polarstation.diary10.model.UserModelKt;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.Calendar;
@@ -305,7 +305,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                         .addListenerForSingleValueEvent(new ValueEventListener() {
                                             @Override
                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
+                                                UserModelKt destinationUserModel = dataSnapshot.getValue(UserModelKt.class);
                                                 String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
                                                 sendRequest(getBaseContext(), destinationUserModel, titleOfDiary, Optional.empty());
                                             }

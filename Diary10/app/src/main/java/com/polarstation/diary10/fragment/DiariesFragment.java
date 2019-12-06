@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +19,7 @@ import com.polarstation.diary10.R;
 import com.polarstation.diary10.activity.DiaryActivity;
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.databinding.FragmentDiariesBinding;
-import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.model.DiaryModelKt;
 import com.polarstation.diary10.util.NetworkStatus;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 public class DiariesFragment extends Fragment {
     private FragmentDiariesBinding binding;
     private DiaryRecyclerViewAdapter adapter;
-    private List<DiaryModel> diaryModelList;
+    private List<DiaryModelKt> diaryModelList;
     private String uid;
     private MainFragmentCallBack callback;
     private FirebaseDatabase dbInstance;
@@ -70,7 +71,7 @@ public class DiariesFragment extends Fragment {
         binding.diariesFragmentRecyclerView.setLayoutManager(layoutManager);
         adapter = new DiaryRecyclerViewAdapter();
         adapter.setOnItemClickListener((holder, view, position) -> {
-            DiaryModel diaryModel = adapter.getItem(position);
+            DiaryModelKt diaryModel = adapter.getItem(position);
             Intent intent = new Intent(context, DiaryActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra(TITLE_KEY, diaryModel.getTitle());
@@ -108,7 +109,7 @@ public class DiariesFragment extends Fragment {
                             diaryModelList.clear();
                             //RxJava
                             Observable.fromIterable(dataSnapshot.getChildren()).subscribe(snapshot -> {
-                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                DiaryModelKt diaryModel = snapshot.getValue(DiaryModelKt.class);
                                 diaryModelList.add(diaryModel);
                             });
                             adapter.addAll(diaryModelList);
@@ -131,19 +132,20 @@ public class DiariesFragment extends Fragment {
             binding.diariesFragmentProgressBar.setVisibility(View.VISIBLE);
 
             diaryModelList = new ArrayList<>();
-            dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_like_users))
+            dbInstance.getReference().child(getString(R.string.fdb_diaries))
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            Log.d("DiariesFragment", "" + dataSnapshot.getChildrenCount());
                             //RxJava
                             Observable.fromIterable(dataSnapshot.getChildren()).filter(snapshot -> {
-                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                DiaryModelKt diaryModel = snapshot.getValue(DiaryModelKt.class);
                                 Map<String, Boolean> map = diaryModel.getLikeUsers();
                                 if(map.keySet().contains(uid) && map.get(uid))
                                     return true;
                                 else return false;
                             }).subscribe(snapshot -> {
-                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                DiaryModelKt diaryModel = snapshot.getValue(DiaryModelKt.class);
                                 diaryModelList.add(diaryModel);
                             });
                             adapter.addAll(diaryModelList);

@@ -20,7 +20,7 @@ import com.polarstation.diary10.activity.BaseActivity
 import com.polarstation.diary10.activity.DiaryActivity
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter
 import com.polarstation.diary10.databinding.FragmentListBinding
-import com.polarstation.diary10.model.DiaryModel
+import com.polarstation.diary10.model.DiaryModelKt
 import com.polarstation.diary10.util.NetworkStatus
 import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
@@ -37,7 +37,7 @@ class ListFragment : Fragment(), View.OnClickListener {
     private lateinit var dbInstance : FirebaseDatabase
     private lateinit var uid : String
     private lateinit var adapter : DiaryRecyclerViewAdapter
-    private lateinit var diaryModelList : ArrayList<DiaryModel>
+    private lateinit var diaryModelList : ArrayList<DiaryModelKt>
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -97,9 +97,9 @@ class ListFragment : Fragment(), View.OnClickListener {
 //                                        .map { it.getValue(DiaryModel::class.java)!! }
 //                                        .forEach { diaryModelList.add(it) }
                             Observable.fromIterable(dataSnapshot.children)
-                                    .filter{ it.getValue(DiaryModel::class.java)!!.uid != uid }
+                                    .filter{ it.getValue(DiaryModelKt::class.java)!!.uid != uid }
                                     .subscribe{snapshot ->
-                                        val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
+                                        val diaryModel = snapshot.getValue(DiaryModelKt::class.java)!!
                                         diaryModelList.add(diaryModel)
 
                                     }
@@ -124,10 +124,10 @@ class ListFragment : Fragment(), View.OnClickListener {
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             diaryModelList.clear()
                             Observable.fromIterable(dataSnapshot.children).filter{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
+                                val diaryModel = snapshot.getValue(DiaryModelKt::class.java)!!
                                 diaryModel.title.contains(searchWord) && diaryModel.uid != uid
                             }.subscribe{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
+                                val diaryModel = snapshot.getValue(DiaryModelKt::class.java)!!
                                 diaryModelList.add(diaryModel)
                             }
 

@@ -18,10 +18,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.polarstation.diary10.data.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.R;
+import com.polarstation.diary10.data.DiaryRecyclerViewAdapter;
 import com.polarstation.diary10.databinding.ActivityWriterAccountBinding;
-import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.model.DiaryModelKt;
 import com.polarstation.diary10.model.UserModel;
 import com.polarstation.diary10.util.NetworkStatus;
 
@@ -66,7 +66,7 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
             binding.writerAccountActivityRecyclerView.setLayoutManager(layoutManager);
             adapter = new DiaryRecyclerViewAdapter();
             adapter.setOnItemClickListener((holder, view, position) -> {
-                DiaryModel diaryModel = adapter.getItem(position);
+                DiaryModelKt diaryModel = adapter.getItem(position);
                 Intent diaryActivityIntent = new Intent(getBaseContext(), DiaryActivity.class);
                 diaryActivityIntent.putExtra(TITLE_KEY, diaryModel.getTitle());
                 diaryActivityIntent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
@@ -89,14 +89,14 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
     private void loadDiaries(String writerUid) {
         netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
         if(netStat == TYPE_CONNECTED) {
-            List<DiaryModel> diaryModelList = new ArrayList<>();
+            List<DiaryModelKt> diaryModelList = new ArrayList<>();
             dbInstance.getReference().child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             diaryModelList.clear();
                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                DiaryModel diaryModel = snapshot.getValue(DiaryModel.class);
+                                DiaryModelKt diaryModel = snapshot.getValue(DiaryModelKt.class);
                                 if (diaryModel.getUid().equals(writerUid))
                                     diaryModelList.add(diaryModel);
                             }

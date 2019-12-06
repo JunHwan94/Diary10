@@ -17,7 +17,7 @@ import com.bumptech.glide.request.target.Target;
 import com.polarstation.diary10.R;
 import com.polarstation.diary10.activity.BaseActivity;
 import com.polarstation.diary10.databinding.ItemDiaryBinding;
-import com.polarstation.diary10.model.DiaryModel;
+import com.polarstation.diary10.model.DiaryModelKt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecyclerViewAdapter.DiaryViewHolder>{
-    private List<DiaryModel> diaryModelList = new ArrayList<>();
+    private List<DiaryModelKt> diaryModelList = new ArrayList<>();
 
     private OnItemClickListener listener;
 
@@ -46,7 +46,7 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
 
     @Override
     public void onBindViewHolder(@NonNull DiaryRecyclerViewAdapter.DiaryViewHolder holder, int position) {
-        DiaryModel diaryModel = diaryModelList.get(position);
+        DiaryModelKt diaryModel = diaryModelList.get(position);
         holder.setItem(diaryModel);
         holder.setOnItemClickListener(listener);
     }
@@ -56,15 +56,15 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
         return diaryModelList.size();
     }
 
-    public void addItem(DiaryModel diaryModel){
+    public void addItem(DiaryModelKt diaryModel){
         diaryModelList.add(diaryModel);
     }
 
-    public void addAll(List<DiaryModel> diaryModelList){
+    public void addAll(List<DiaryModelKt> diaryModelList){
         this.diaryModelList = diaryModelList;
     }
 
-    public DiaryModel getItem(int position){
+    public DiaryModelKt getItem(int position){
         return diaryModelList.get(position);
     }
 
@@ -89,7 +89,7 @@ public class DiaryRecyclerViewAdapter extends RecyclerView.Adapter<DiaryRecycler
             });
         }
 
-        public void setItem(DiaryModel diaryModel){
+        public void setItem(DiaryModelKt diaryModel){
             Glide.with(itemView.getContext())
                     .load(diaryModel.getCoverImageUrl())
                     .apply(new RequestOptions().centerCrop().override(250,300).diskCacheStrategy(DiskCacheStrategy.NONE))

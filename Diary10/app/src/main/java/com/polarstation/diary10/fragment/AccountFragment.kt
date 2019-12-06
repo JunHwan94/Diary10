@@ -33,7 +33,7 @@ import com.polarstation.diary10.activity.EditAccountActivity
 import com.polarstation.diary10.activity.PUSH_TOKEN
 import com.polarstation.diary10.activity.PhotoViewActivity
 import com.polarstation.diary10.databinding.FragmentAccountBinding
-import com.polarstation.diary10.model.UserModel
+import com.polarstation.diary10.model.UserModelKt
 import com.polarstation.diary10.util.NetworkStatus
 import io.reactivex.Observable
 import java.util.*
@@ -74,7 +74,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
             uid = authInstance.currentUser!!.uid
             dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).addListenerForSingleValueEvent(object : ValueEventListener{
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val userModel = dataSnapshot.getValue(UserModel::class.java)
+                    val userModel = dataSnapshot.getValue(UserModelKt::class.java)
                     val bundle = Bundle()
                     bundle.putParcelable(USER_MODEL_KEY, userModel)
                     setUserInfo(bundle)
@@ -141,7 +141,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
     }
 
     private fun setUserInfo(bundle: Bundle) {
-        val userModel : UserModel = bundle.getParcelable(USER_MODEL_KEY)!!
+        val userModel : UserModelKt = bundle.getParcelable(USER_MODEL_KEY)!!
         imageUrl = userModel.profileImageUrl
 
         netStat = NetworkStatus.getConnectivityStatus(context)
@@ -209,7 +209,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
             val name = data.getStringExtra(NAME_KEY)
             val comment = data.getStringExtra(COMMENT_KEY)
 
-            if(imageUrl != ""){
+            if(imageUri != ""){
                 Glide.with(context)
                         .load(imageUri)
                         .apply(RequestOptions().circleCrop())

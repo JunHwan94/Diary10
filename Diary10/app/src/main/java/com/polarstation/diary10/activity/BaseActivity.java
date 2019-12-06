@@ -1,13 +1,11 @@
 package com.polarstation.diary10.activity;
 
 import android.graphics.Typeface;
-import androidx.appcompat.app.AppCompatActivity;
-import gun0912.tedkeyboardobserver.TedKeyboardObserver;
-import gun0912.tedkeyboardobserver.TedRxKeyboardObserver;
-
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity{
     private static Typeface typeface = null;
@@ -37,6 +35,5 @@ public class BaseActivity extends AppCompatActivity{
             }
         }
     }
-    /*  ~36 line 출처
-    http://blog.naver.com/PostView.nhn?blogId=hg1286&logNo=220602654734  */
+    // [참고] http://blog.naver.com/PostView.nhn?blogId=hg1286&logNo=220602654734
 }

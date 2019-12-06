@@ -26,7 +26,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityLoginBinding
-import com.polarstation.diary10.model.UserModel
+import com.polarstation.diary10.model.UserModelKt
 import com.polarstation.diary10.util.NetworkStatus
 import java.security.MessageDigest
 
@@ -121,7 +121,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
         }else Toast.makeText(baseContext, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
     }
 
-    private fun checkUid(userName: String?, profileImageUrl: String, email: String) {
+    private fun checkUid(userName: String, profileImageUrl: String, email: String) {
         val hash = createHashValue(email)
         netStat = NetworkStatus.getConnectivityStatus(this)
         if(netStat == NetworkStatus.TYPE_CONNECTED){
@@ -143,15 +143,15 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
         }else Toast.makeText(baseContext, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
     }
 
-    private fun addUserToDB(userName: String?, profileImageUrl: String, hash: String) {
+    private fun addUserToDB(userName: String, profileImageUrl: String, hash: String) {
 //        Log.d("AddUserToDB", "Called")
-        val userModel =
-                UserModel.Builder()
-                        .setUserName(userName)
-                        .setProfileImageUrl(profileImageUrl)
-                        .setUid(uid)
-                        .setHash(hash)
-                        .build()
+        val userModel = UserModelKt(userName, profileImageUrl, uid, hash)
+//                        .Builder()
+//                        .setUserName(userName)
+//                        .setProfileImageUrl(profileImageUrl)
+//                        .setUid(uid)
+//                        .setHash(hash)
+//                        .build()
 
         netStat = NetworkStatus.getConnectivityStatus(this)
         if (netStat == NetworkStatus.TYPE_CONNECTED) {
@@ -199,19 +199,22 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     private fun checkHashOfEmail(loginResult: LoginResult) {
         val request = GraphRequest.newMeRequest(loginResult.accessToken) { _, response -> // object가 _로 표현
             val email = response.jsonObject.getString(getString(R.string.email))
-            val hash = createHashValue(email)
-            dbInstance.reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_hash)).equalTo(hash)
-                    .addListenerForSingleValueEvent(object : ValueEventListener{
-                        override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            if(0 < dataSnapshot.childrenCount) {
-                                Toast.makeText(baseContext, getString(R.string.already_have_account) + "\n $hash", Toast.LENGTH_SHORT).show()
+            if(email == null || email == "") {
+                val hash = createHashValue(email)
+                dbInstance.reference.child(getString(R.string.fdb_users)).orderByChild(getString(R.string.fdb_hash)).equalTo(hash)
+                        .addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                                if (0 < dataSnapshot.childrenCount) {
+                                    Toast.makeText(baseContext, getString(R.string.already_have_account) + "\n $hash", Toast.LENGTH_SHORT).show()
 
-                                setViewWhenDone()
-                                LoginManager.getInstance().logOut()
-                            }else handleFacebookAccessToken(loginResult.accessToken)
-                        }
-                        override fun onCancelled(p0: DatabaseError) {}
-                    })
+                                    setViewWhenDone()
+                                    LoginManager.getInstance().logOut()
+                                } else handleFacebookAccessToken(loginResult.accessToken)
+                            }
+
+                            override fun onCancelled(p0: DatabaseError) {}
+                        })
+            }
         }
 
         val parameters = Bundle()
@@ -236,7 +239,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
             true -> email
             false -> hash
         }
-    }
+    } // [참고] https://roadrunner.tistory.com/608
 
     private fun setViewWhenLoading() {
         binding.loginActivityProgressBar.visibility = View.VISIBLE

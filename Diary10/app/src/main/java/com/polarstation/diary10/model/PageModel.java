@@ -3,20 +3,17 @@ package com.polarstation.diary10.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class PageModel implements Parcelable {
     private String content;
     private String imageUrl = "";
-    private String encodedString;
+//    private String encodedString;
     private long createTime;
     private String key;
 
     public static class Builder{
         private String content;
         private String imageUrl;
-        private String encodedString;
+//        private String encodedString;
         private long createTime;
 
         public Builder setContent(String content) {
@@ -29,10 +26,10 @@ public class PageModel implements Parcelable {
             return this;
         }
 
-        public Builder setEncodedString(String encodedString){
-            this.encodedString = encodedString;
-            return this;
-        }
+//        public Builder setEncodedString(String encodedString){
+//            this.encodedString = encodedString;
+//            return this;
+//        }
 
         public Builder setCreateTime(long createTime) {
             this.createTime = createTime;
@@ -48,14 +45,14 @@ public class PageModel implements Parcelable {
     private PageModel(Builder builder){
         content = builder.content;
         imageUrl = builder.imageUrl;
-        encodedString = builder.encodedString;
+//        encodedString = builder.encodedString;
         createTime = builder.createTime;
     }
 
     private PageModel(Parcel parcel){
         content = parcel.readString();
         imageUrl = parcel.readString();
-        encodedString = parcel.readString();
+//        encodedString = parcel.readString();
         createTime = parcel.readLong();
         key = parcel.readString();
     }
@@ -81,7 +78,7 @@ public class PageModel implements Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(content);
         parcel.writeString(imageUrl);
-        parcel.writeString(encodedString);
+//        parcel.writeString(encodedString);
         parcel.writeLong(createTime);
         parcel.writeString(key);
     }
@@ -94,9 +91,9 @@ public class PageModel implements Parcelable {
         return imageUrl;
     }
 
-    public String getEncodedString(){
-        return encodedString;
-    }
+//    public String getEncodedString(){
+//        return encodedString;
+//    }
 
     public long getCreateTime() {
         return createTime;
@@ -108,7 +105,7 @@ public class PageModel implements Parcelable {
 
     public String toString(){
         return String.valueOf("content : " + content
-        + "\nencodedString : " + encodedString
+//        + "\nencodedString : " + encodedString
         + "\ncreateTime : " + createTime);
 
     }

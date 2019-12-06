@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -398,9 +397,9 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                         // RxJava
                         Observable.fromIterable(diaryModel.getPages().values()).filter(pageModel -> pageModel.getKey().equals(pageKey)).subscribe(pageModel -> {
                             if(!String.valueOf(imageUrl).equals("")) {
-                                Log.d("PageFragment", "uid : " + uid);
-                                Log.d("PageFragment", "diaryCreateTime : " + diaryCreateTime);
-                                Log.d("PageFragment", "pageCreateTime : " + pageCreateTime);
+//                                Log.d("PageFragment", "uid : " + uid);
+//                                Log.d("PageFragment", "diaryCreateTime : " + diaryCreateTime);
+//                                Log.d("PageFragment", "pageCreateTime : " + pageCreateTime);
                                 strInstance.getReference().child(getString(R.string.fstr_diary_images)).child(uid).child(String.valueOf(diaryCreateTime)).child(String.valueOf(pageCreateTime)).delete()
                                         .addOnSuccessListener(aVoid -> deletePage())
                                         .addOnFailureListener(e -> e.printStackTrace());
