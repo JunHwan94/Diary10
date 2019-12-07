@@ -115,20 +115,17 @@ class ListFragment : Fragment(), View.OnClickListener {
             dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_private)).equalTo(false)
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            diaryModelList.clear()
-                            Observable.fromIterable(dataSnapshot.children).filter{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
-                                diaryModel.title.contains(searchWord) && diaryModel.uid != uid()
-                            }.subscribe{snapshot ->
-                                val diaryModel = snapshot.getValue(DiaryModel::class.java)!!
-                                diaryModelList.add(diaryModel)
+                            adapter.clear()
+                            if(adapter.itemCount == 0) Toast.makeText(context, getString(R.string.no_result), Toast.LENGTH_SHORT).show()
+                            else GlobalScope.launch{
+                                    sequence{ yieldAll(dataSnapshot.children) }
+                                            .filter{ it.getValue(DiaryModel::class.java)!!.title.contains(searchWord) }
+                                            .map{ it.getValue(DiaryModel::class.java) }
+                                            .forEach {
+                                                adapter.addItem(it)
+                                                callbackOptional.get().notifyAdapter(adapter)
+                                            }
                             }
-
-                            if(diaryModelList.size == 0)
-                                Toast.makeText(context, getString(R.string.no_result), Toast.LENGTH_SHORT).show()
-                            adapter.addAll(diaryModelList)
-                            adapter.notifyDataSetChanged()
-
                             binding.listFragmentProgressBar.visibility = View.INVISIBLE
                         }
 
