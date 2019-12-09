@@ -36,11 +36,11 @@ const val WRITE_TYPE = 12
 const val ACCOUNT_TYPE = 13
 
 class MainActivity : AppCompatActivity(), MainFragmentCallBack {
-    private lateinit var binding : ActivityMainBinding
-    private lateinit var dbInstance : FirebaseDatabase
-    private lateinit var uid : String
-    private lateinit var bundle : Bundle
-    private var netStat : Int? = null
+    private lateinit var binding: ActivityMainBinding
+    private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
+    private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
+    private lateinit var bundle: Bundle
+    private val netStat: () -> Int = { NetworkStatus.getConnectivityStatus(this) }
 
     private lateinit var listFragment : ListFragment
     private lateinit var createDiaryFragment : WriteFragment
@@ -48,14 +48,11 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     private lateinit var accountFragment : AccountFragment
     private lateinit var createOrWriteFragment : WriteFragment
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        uid = FirebaseAuth.getInstance().currentUser!!.uid
         bundle = Bundle()
-        dbInstance = FirebaseDatabase.getInstance()
 
         setViewWhenLoading()
 
@@ -72,7 +69,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         val token : String = FirebaseInstanceId.getInstance().token.toString()
         val map = HashMap<String, Any>().apply { put(PUSH_TOKEN, token) }
 
-        dbInstance.reference.child(getString(R.string.fdb_users)).child(uid).updateChildren(map)
+        dbInstance().reference.child(getString(R.string.fdb_users)).child(uid()).updateChildren(map)
     }
 
     private fun setNavigationViewListener(){
@@ -99,9 +96,8 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
     }
 
     override fun findMyDiary() {
-        netStat = NetworkStatus.getConnectivityStatus(this)
-        if(netStat == NetworkStatus.TYPE_CONNECTED){
-            dbInstance.reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid)
+        if(netStat() == NetworkStatus.TYPE_CONNECTED){
+            dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid())
                     .addValueEventListener(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             val diaryTitleList = ArrayList<String>()
@@ -160,13 +156,9 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         exitProcess(0)
     }
 
-    override fun getActivity(): Activity {
-        return this
-    }
+    override fun getActivity(): Activity = this
 
-    override fun setNavigationViewDisabled() {
-        binding.mainActivityBottomNavigationView.setOnNavigationItemSelectedListener(null)
-    }
+    override fun setNavigationViewDisabled() = binding.mainActivityBottomNavigationView.setOnNavigationItemSelectedListener(null)
 
     private fun setViewWhenLoading(){
         binding.mainActivityProgressBar.visibility = View.VISIBLE
@@ -178,7 +170,5 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         binding.mainActivityBottomNavigationView.isEnabled = true
     }
 
-    override fun notifyAdapter(adapter: DiaryRecyclerViewAdapter) {
-        runOnUiThread { adapter.notifyDataSetChanged() }
-    }
+    override fun notifyAdapter(adapter: DiaryRecyclerViewAdapter) = runOnUiThread { adapter.notifyDataSetChanged() }
 }

@@ -28,7 +28,6 @@ import io.reactivex.Observable
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
 
 const val TITLE_KEY = "titleKey"
 const val WRITER_UID_KEY = "writerKey"
@@ -41,7 +40,6 @@ class ListFragment : Fragment(), View.OnClickListener {
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
     private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
     private lateinit var adapter : DiaryRecyclerViewAdapter
-    private lateinit var diaryModelList : ArrayList<DiaryModel>
     private lateinit var callbackOptional: Optional<MainFragmentCallBack>
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -55,9 +53,7 @@ class ListFragment : Fragment(), View.OnClickListener {
             binding.listFragmentRecyclerView.layoutManager = GridLayoutManager(context, 3)
             binding.listFragmentRecyclerView.adapter = adapter
 
-            diaryModelList = ArrayList()
             loadDiaries()
-
             Observable.just(binding.listFragmentRefreshButton, binding.listFragmentSearchButton)
                     .subscribe{it.setOnClickListener(this)}
 

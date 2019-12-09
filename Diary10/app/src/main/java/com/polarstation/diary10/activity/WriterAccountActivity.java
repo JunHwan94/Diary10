@@ -68,7 +68,7 @@ public class WriterAccountActivity extends BaseActivity implements View.OnClickL
             adapter = new DiaryRecyclerViewAdapter();
             adapter.setOnItemClickListener((holder, view, position) -> {
                 DiaryModel diaryModel = adapter.getItem(position);
-                Intent diaryActivityIntent = new Intent(getBaseContext(), DiaryActivity.class);
+                Intent diaryActivityIntent = new Intent(getBaseContext(), DiaryActivityKt.class);
                 diaryActivityIntent.putExtra(TITLE_KEY, diaryModel.getTitle());
                 diaryActivityIntent.putExtra(WRITER_UID_KEY, diaryModel.getUid());
                 diaryActivityIntent.putExtra(IMAGE_URL_KEY, diaryModel.getCoverImageUrl());

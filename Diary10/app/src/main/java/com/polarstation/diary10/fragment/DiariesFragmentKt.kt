@@ -72,6 +72,7 @@ class DiariesFragmentKt : Fragment() {
             dbInstance().reference.child(getString(R.string.fdb_diaries))
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            adapter.clear()
                             GlobalScope.launch{
                                 sequence{ yieldAll(dataSnapshot.children) }
                                         .filter {
@@ -98,6 +99,7 @@ class DiariesFragmentKt : Fragment() {
             dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid())
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            adapter.clear()
                             GlobalScope.launch{
                                 sequence{ yieldAll(dataSnapshot.children) }
                                         .forEach{

@@ -190,9 +190,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
                     putExtra(URL_KEY, "")
                 })
             }
-            R.id.accountFragment_rootLayout -> {
-                if(isMenuOpened) binding.accountFragmentSlideMenu.startAnimation(scaleSmaller)
-            }
+            R.id.accountFragment_rootLayout -> if(isMenuOpened) binding.accountFragmentSlideMenu.startAnimation(scaleSmaller)
         }
     }
 

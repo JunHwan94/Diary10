@@ -37,12 +37,12 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import gun0912.tedkeyboardobserver.TedKeyboardObserver;
 
-import static com.polarstation.diary10.activity.DiaryActivity.IS_COVER_KEY;
+import static com.polarstation.diary10.activity.DiaryActivityKt.EDIT_DIARY_CODE;
+import static com.polarstation.diary10.activity.DiaryActivityKt.IS_COVER_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.CONTENT_KEY;
-import static com.polarstation.diary10.fragment.PageFragment.EDIT_DIARY_CODE;
 import static com.polarstation.diary10.fragment.PageFragment.IS_NEW_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.PAGE_CREATE_TIME_KEY;
 import static com.polarstation.diary10.fragment.PageFragment.PAGE_KEY_KEY;

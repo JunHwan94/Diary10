@@ -48,8 +48,9 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import io.reactivex.Observable;
 
-import static com.polarstation.diary10.activity.DiaryActivity.IS_COVER_KEY;
-import static com.polarstation.diary10.activity.DiaryActivity.PAGE_MODEL_KEY;
+import static com.polarstation.diary10.activity.DiaryActivityKt.EDIT_DIARY_CODE;
+import static com.polarstation.diary10.activity.DiaryActivityKt.IS_COVER_KEY;
+import static com.polarstation.diary10.activity.DiaryActivityKt.PAGE_MODEL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
@@ -74,12 +75,13 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     private String title;
     private String content;
     private long pageCreateTime;
-    private PageFragmentCallback callback;
+    private int pageIndex;
+    private DiaryFragmentCallback callback;
     private Function<Context, Integer> netStat = context -> NetworkStatus.Companion.getGetConnectivityStatus().invoke(context);
     private Context context;
     private AdRequest adRequest;
 
-    public static final int EDIT_DIARY_CODE = 100;
+//    public static final int EDIT_DIARY_CODE = 100;
     public static final String CONTENT_KEY = "contentKey";
     public static final String PAGE_KEY_KEY = "pageKeyKey";
     public static final String IS_NEW_KEY = "isNewKey";
@@ -410,6 +412,7 @@ public class PageFragment extends Fragment implements View.OnClickListener{
                     Toast.makeText(context, getString(R.string.delete_success), Toast.LENGTH_SHORT).show();
 
                     callback.finishDiaryActivity();
+//                    callback.movePageToCover(pageIndex);
                 });
     }
 
@@ -489,8 +492,8 @@ public class PageFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if(context instanceof PageFragmentCallback)
-            callback = (PageFragmentCallback)context;
+        if(context instanceof DiaryFragmentCallback)
+            callback = (DiaryFragmentCallback)context;
         this.context = context;
     }
 
