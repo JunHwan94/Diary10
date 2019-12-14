@@ -88,7 +88,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
             }
 
             Observable.just(binding.writeFragmentChildConstraintLayout, binding.writeFragmentCancelButton, binding.writeFragmentSaveButton)
-                    .subscribe{it.setOnClickListener(this)}
+                    .subscribe{it.setOnClickListener(this)}.dispose()
 
             TedKeyboardObserver(callbackOptional.get().activity).listen(object : BaseKeyboardObserver.OnKeyboardListener{
                 override fun onKeyboardChange(isShow: Boolean) {

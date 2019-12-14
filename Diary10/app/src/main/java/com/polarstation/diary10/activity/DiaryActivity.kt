@@ -20,6 +20,8 @@ import com.polarstation.diary10.fragment.*
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.model.PageModel
 import com.polarstation.diary10.util.NetworkStatus
+import java.util.*
+import kotlin.collections.ArrayList
 
 const val IS_COVER_KEY = "isCoverKey"
 const val PAGE_MODEL_KEY = "pageModelKey"
@@ -58,16 +60,10 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
                     .addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             sequence { yieldAll(dataSnapshot.children) }
-                                    .map { it.getValue(PageModel::class.java) }
+                                    .map { it.getValue(PageModel::class.java)!! }
                                     .forEach{
-                                        pagerAdapter.addItem(PageFragment().apply {
-                                            arguments = Bundle().apply{
-                                                putString(TITLE_KEY, title())
-                                                putString(WRITER_UID_KEY, writerUid())
-                                                putString(DIARY_KEY_KEY, key)
-                                                putParcelable(PAGE_MODEL_KEY, it)
-                                            }
-                                        })
+                                        pagerAdapter.addItem(PageFragment.newInstance(title = title(), writerUid = writerUid(),
+                                                diaryKey = diaryKey(), pageModelOp = Optional.of(it)))
                                     }
                             setViewWhenDone()
                         }
@@ -118,15 +114,8 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
                     .addListenerForSingleValueEvent(object : ValueEventListener{
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             val diaryModel = dataSnapshot.getValue(DiaryModel::class.java)!!
-                            pagerAdapter.addItem(PageFragment().apply {
-                                arguments = Bundle().apply {
-                                    putBoolean(IS_COVER_KEY, isCover)
-                                    putString(TITLE_KEY, diaryModel.title)
-                                    putString(WRITER_UID_KEY, diaryModel.uid)
-                                    putString(IMAGE_URL_KEY, diaryModel.coverImageUrl)
-                                    putString(DIARY_KEY_KEY, diaryModel.key)
-                                }
-                            })
+                            pagerAdapter.addItem(PageFragment.newInstance(isCover = isCover, title = diaryModel.title,
+                                    writerUid = diaryModel.uid, coverImageUrl = diaryModel.coverImageUrl, diaryKey = diaryModel.key))
 
                             setViewWhenDone()
                         }
@@ -137,25 +126,12 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
         }else Toast.makeText(baseContext, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
     }
 
-//    override fun movePageToCover(idx: Int) {
-//        binding.diaryActivityViewPager.adapter = pagerAdapter
-//        dataChanges()
-//        pagerAdapter.remove(idx)
-////        pagerAdapter.clear()
-////        loadDiaryCover()
-////        loadDiary(diaryKey())
-//    }
-
     class ListPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
         private val fragmentList = ArrayList<Fragment>()
         fun addItem(fragment: Fragment){
             fragmentList.add(fragment)
             notifyDataSetChanged() // 여기서 notify 안하면 에러발생
         }
-//        fun remove(idx: Int){
-//            fragmentList.removeAt(idx)
-//            notifyDataSetChanged()
-//        }
         fun clear(){
             fragmentList.clear()
             notifyDataSetChanged()

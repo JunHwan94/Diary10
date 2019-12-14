@@ -42,10 +42,10 @@ import static com.polarstation.diary10.activity.DiaryActivityKt.IS_COVER_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.DIARY_KEY_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.IMAGE_URL_KEY;
 import static com.polarstation.diary10.fragment.ListFragmentKt.TITLE_KEY;
-import static com.polarstation.diary10.fragment.PageFragment.CONTENT_KEY;
-import static com.polarstation.diary10.fragment.PageFragment.IS_NEW_KEY;
-import static com.polarstation.diary10.fragment.PageFragment.PAGE_CREATE_TIME_KEY;
-import static com.polarstation.diary10.fragment.PageFragment.PAGE_KEY_KEY;
+import static com.polarstation.diary10.fragment.PageFragmentKt.CONTENT_KEY;
+import static com.polarstation.diary10.fragment.PageFragmentKt.IS_NEW_KEY;
+import static com.polarstation.diary10.fragment.PageFragmentKt.PAGE_CREATE_TIME_KEY;
+import static com.polarstation.diary10.fragment.PageFragmentKt.PAGE_KEY_KEY;
 import static com.polarstation.diary10.fragment.WriteFragment.sendRequest;
 import static com.polarstation.diary10.util.NetworkStatus.TYPE_CONNECTED;
 
