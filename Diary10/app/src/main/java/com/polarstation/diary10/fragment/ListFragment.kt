@@ -40,7 +40,7 @@ class ListFragment : Fragment(), View.OnClickListener {
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
     private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
     private lateinit var adapter : DiaryRecyclerViewAdapter
-    private lateinit var callbackOptional: Optional<MainFragmentCallBack>
+    private lateinit var callbackOptional: Optional<MainFragmentCallback>
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -132,7 +132,7 @@ class ListFragment : Fragment(), View.OnClickListener {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if(context is MainFragmentCallBack)
+        if(context is MainFragmentCallback)
             callbackOptional = Optional.of(context)
     }
 

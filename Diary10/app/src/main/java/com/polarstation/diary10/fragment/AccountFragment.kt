@@ -52,7 +52,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
     private lateinit var binding : FragmentAccountBinding
     private val  authInstance : () -> FirebaseAuth = { FirebaseAuth.getInstance() }
     private val dbInstance : () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
-    private lateinit var callbackOptional : Optional<MainFragmentCallBack>
+    private lateinit var callbackOptional : Optional<MainFragmentCallback>
     private val uid : () -> String = { authInstance().currentUser!!.uid }
     var isMenuOpened = true
     private var netStat : () -> Int = { NetworkStatus.getConnectivityStatus(context!!) }
@@ -229,7 +229,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
-        if(context is MainFragmentCallBack)
+        if(context is MainFragmentCallback)
             callbackOptional = Optional.of(context)
     }
 

@@ -261,7 +261,7 @@ class PageFragment : Fragment(), View.OnClickListener {
     }
 
     private fun startWriteDiaryActivity(id: Int){
-        callbackOptional.get().activity.startActivityForResult(Intent(context, WriteDiaryActivity::class.java).apply{
+        callbackOptional.get().getActivity().startActivityForResult(Intent(context, WriteDiaryActivity::class.java).apply{
             when(id) {
                 R.id.pageFragment_editDiaryButton -> {
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP

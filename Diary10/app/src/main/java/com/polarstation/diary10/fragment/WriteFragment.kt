@@ -58,7 +58,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
     private val netStat: () -> Int = { NetworkStatus.getConnectivityStatus(context!!) }
     private var imageUrl: String = ""
     private lateinit var imageUri : Uri
-    private lateinit var callbackOptional : Optional<MainFragmentCallBack>
+    private lateinit var callbackOptional : Optional<MainFragmentCallback>
     private var isImageChanged : Boolean = false
 
     private var writeType : Int? = null
@@ -90,7 +90,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
             Observable.just(binding.writeFragmentChildConstraintLayout, binding.writeFragmentCancelButton, binding.writeFragmentSaveButton)
                     .subscribe{it.setOnClickListener(this)}.dispose()
 
-            TedKeyboardObserver(callbackOptional.get().activity).listen(object : BaseKeyboardObserver.OnKeyboardListener{
+            TedKeyboardObserver(callbackOptional.get().getActivity()).listen(object : BaseKeyboardObserver.OnKeyboardListener{
                 override fun onKeyboardChange(isShow: Boolean) {
                     if(!isShow) binding.writeFragmentRootConstraintLayout.clearFocus()
                 }
@@ -203,35 +203,6 @@ class WriteFragment : Fragment(), View.OnClickListener {
                 }
     }
 
-//    private fun sendFCM(diaryKey: String){
-////        Log.d("SendFCM", "run")
-//        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey)
-//                .addListenerForSingleValueEvent(object : ValueEventListener{
-//                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-//                        val diaryModel = dataSnapshot.getValue(DiaryModel::class.java)!!
-//                        val likeUsers : Map<String, Boolean> = diaryModel.likeUsers
-//
-//                        GlobalScope.launch{
-//                            sequence{ yieldAll(likeUsers.keys) }
-//                                    .filter{ likeUsers[it] ?: false }
-//                                    .forEach {
-//                                        dbInstance().reference.child(getString(R.string.fdb_users)).child(it)
-//                                                .addListenerForSingleValueEvent(object : ValueEventListener{
-//                                                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-//                                                        val destUserModel = dataSnapshot.getValue(UserModel::class.java)!!
-//                                                        sendRequest(context!!, destUserModel, binding.writeFragmentSpinner.selectedItem.toString(), callbackOptional)
-//                                                    }
-//
-//                                                    override fun onCancelled(p0: DatabaseError) {}
-//                                                })
-//                                    }
-//                        }
-//                    }
-//
-//                    override fun onCancelled(p0: DatabaseError) {}
-//                })
-//    }
-
     private fun saveNewDiary() {
         setViewWhenUploading()
         putDiaryImageFile()
@@ -305,7 +276,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is MainFragmentCallBack)
+        if (context is MainFragmentCallback)
             callbackOptional = Optional.of(context)
     }
 
@@ -348,7 +319,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
                 }
 
         @JvmStatic
-        fun sendRequest(context: Context, destUserModel: UserModel, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>, activityOp: Optional<WriteDiaryActivity>){
+        fun sendRequest(context: Context, destUserModel: UserModel, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallback>, activityOp: Optional<WriteDiaryActivity>){
             val gson = Gson()
             val userName = FirebaseAuth.getInstance().currentUser!!.displayName
             val title = context.getString(R.string.fcm_title)
@@ -372,7 +343,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
             okHttpClient.newCall(request).enqueue(object : Callback{
                 override fun onResponse(call: Call, response: Response) {
                     Log.d("OkHttp", response.toString())
-                    if(callbackOptional != Optional.empty<MainFragmentCallBack>())
+                    if(callbackOptional != Optional.empty<MainFragmentCallback>())
                         callbackOptional.get().replaceFragment(ACCOUNT_TYPE) // runOnUiThread
                     else finishWithEditResult(activityOp.get())
 
@@ -383,7 +354,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
         }
 
         @JvmStatic
-        fun pushPage(context: Context, dbInstance: FirebaseDatabase, content: String, pageCreateTime: Long, imageUrl: String, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack> = Optional.empty(), activityOp: Optional<WriteDiaryActivity> = Optional.empty()){
+        fun pushPage(context: Context, dbInstance: FirebaseDatabase, content: String, pageCreateTime: Long, imageUrl: String, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallback> = Optional.empty(), activityOp: Optional<WriteDiaryActivity> = Optional.empty()){
 //        Log.d("PushPage", "run")
             val pageModel = PageModel(content, imageUrl, pageCreateTime)
             dbInstance.reference.child(context.getString(R.string.fdb_diaries)).child(diaryKey).child(context.getString(R.string.fdb_pages)).push().setValue(pageModel)
@@ -406,7 +377,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
         }
 
         @JvmStatic
-        fun sendFCM(context: Context, dbInstance: FirebaseDatabase, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>, activityOp: Optional<WriteDiaryActivity> = Optional.empty()){
+        fun sendFCM(context: Context, dbInstance: FirebaseDatabase, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallback>, activityOp: Optional<WriteDiaryActivity> = Optional.empty()){
 //        Log.d("SendFCM", "run")
             dbInstance.reference.child(context.getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(object : ValueEventListener{

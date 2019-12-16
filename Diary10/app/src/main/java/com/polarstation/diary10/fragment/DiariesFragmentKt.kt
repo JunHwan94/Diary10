@@ -32,7 +32,7 @@ class DiariesFragmentKt : Fragment() {
     private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
     private val type: () -> String = { arguments!!.getString(FRAGMENT_TYPE_KEY)!! }
-    private lateinit var callbackOptional: Optional<MainFragmentCallBack>
+    private lateinit var callbackOptional: Optional<MainFragmentCallback>
     private lateinit var adapter: DiaryRecyclerViewAdapter
     private lateinit var binding: FragmentDiariesBinding
 
@@ -124,7 +124,7 @@ class DiariesFragmentKt : Fragment() {
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
-        if(context is MainFragmentCallBack)
+        if(context is MainFragmentCallback)
             callbackOptional = Optional.of(context)
     }
 

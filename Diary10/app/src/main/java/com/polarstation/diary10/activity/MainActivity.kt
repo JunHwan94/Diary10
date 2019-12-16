@@ -15,10 +15,7 @@ import com.google.firebase.iid.FirebaseInstanceId
 import com.polarstation.diary10.R
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter
 import com.polarstation.diary10.databinding.ActivityMainBinding
-import com.polarstation.diary10.fragment.AccountFragment
-import com.polarstation.diary10.fragment.ListFragment
-import com.polarstation.diary10.fragment.MainFragmentCallBack
-import com.polarstation.diary10.fragment.WriteFragment
+import com.polarstation.diary10.fragment.*
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
@@ -35,7 +32,7 @@ const val CREATE_TYPE = 11
 const val WRITE_TYPE = 12
 const val ACCOUNT_TYPE = 13
 
-class MainActivity : AppCompatActivity(), MainFragmentCallBack {
+class MainActivity : AppCompatActivity(), MainFragmentCallback {
     private lateinit var binding: ActivityMainBinding
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
     private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
