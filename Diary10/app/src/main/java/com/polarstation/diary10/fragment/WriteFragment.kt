@@ -28,7 +28,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import com.polarstation.diary10.R
 import com.polarstation.diary10.activity.*
-import com.polarstation.diary10.activity.WriteDiaryActivityKt.Companion.finishWithEditResult
+import com.polarstation.diary10.activity.WriteDiaryActivity.Companion.finishWithEditResult
 import com.polarstation.diary10.databinding.FragmentWriteBinding
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.model.NotificationModel
@@ -41,7 +41,6 @@ import io.reactivex.Observable
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import okhttp3.*
 import java.io.IOException
 import java.util.*
@@ -172,19 +171,19 @@ class WriteFragment : Fragment(), View.OnClickListener {
             dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid())
                     .addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            val job = runBlocking {
-                                GlobalScope.launch {
-                                    sequence { yieldAll(dataSnapshot.children) }
-                                        .filter { it.getValue(DiaryModel::class.java)!!.title == titleOfDiary }
-                                        .forEach {
-                                            val diaryModel = it.getValue(DiaryModel::class.java)!!
-                                            val diaryKey = diaryModel.key
-                                            if (!isImageChanged) pushPage(context!!, dbInstance(), content, Calendar.getInstance().timeInMillis, imageUrl, diaryKey, diaryModel.title, callbackOptional)
-                                            else putPageImageFile(content, diaryModel)
-                                        }
-                                }
+//                            val job = runBlocking {
+                            GlobalScope.launch {
+                                sequence { yieldAll(dataSnapshot.children) }
+                                    .filter { it.getValue(DiaryModel::class.java)!!.title == titleOfDiary }
+                                    .forEach {
+                                        val diaryModel = it.getValue(DiaryModel::class.java)!!
+                                        val diaryKey = diaryModel.key
+                                        if (!isImageChanged) pushPage(context!!, dbInstance(), content, Calendar.getInstance().timeInMillis, imageUrl, diaryKey, diaryModel.title, callbackOptional)
+                                        else putPageImageFile(content, diaryModel)
+                                    }
                             }
-                            job.start()
+//                            }
+//                            job.start()
                         }
 
                         override fun onCancelled(p0: DatabaseError) {}
@@ -349,15 +348,17 @@ class WriteFragment : Fragment(), View.OnClickListener {
                 }
 
         @JvmStatic
-        fun sendRequest(context: Context, destUserModel: UserModel, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>, activityOp: Optional<WriteDiaryActivityKt>){
+        fun sendRequest(context: Context, destUserModel: UserModel, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>, activityOp: Optional<WriteDiaryActivity>){
             val gson = Gson()
             val userName = FirebaseAuth.getInstance().currentUser!!.displayName
             val title = context.getString(R.string.fcm_title)
             val text = userName + "님의 $titleOfDiary "
 
-            val notificationModel = NotificationModel(destUserModel.pushToken)
-            notificationModel.data.setTitle(title)
-            notificationModel.data.setText(text)
+            val notificationModel = NotificationModel(destUserModel.pushToken).apply { data.apply { this.title = title; this.text = text } }
+//                    NotificationModel(destUserModel.pushToken)
+//            notificationModel.data.setTitle(title)
+//            notificationModel.data.setText(text)
+
 
             val requestBody = RequestBody.create(MediaType.parse(context.getString(R.string.media_type)), gson.toJson(notificationModel))
             val request = Request.Builder()
@@ -382,7 +383,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
         }
 
         @JvmStatic
-        fun pushPage(context: Context, dbInstance: FirebaseDatabase, content: String, pageCreateTime: Long, imageUrl: String, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack> = Optional.empty(), activityOp: Optional<WriteDiaryActivityKt> = Optional.empty()){
+        fun pushPage(context: Context, dbInstance: FirebaseDatabase, content: String, pageCreateTime: Long, imageUrl: String, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack> = Optional.empty(), activityOp: Optional<WriteDiaryActivity> = Optional.empty()){
 //        Log.d("PushPage", "run")
             val pageModel = PageModel(content, imageUrl, pageCreateTime)
             dbInstance.reference.child(context.getString(R.string.fdb_diaries)).child(diaryKey).child(context.getString(R.string.fdb_pages)).push().setValue(pageModel)
@@ -405,7 +406,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
         }
 
         @JvmStatic
-        fun sendFCM(context: Context, dbInstance: FirebaseDatabase, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>, activityOp: Optional<WriteDiaryActivityKt> = Optional.empty()){
+        fun sendFCM(context: Context, dbInstance: FirebaseDatabase, diaryKey: String, titleOfDiary: String, callbackOptional: Optional<MainFragmentCallBack>, activityOp: Optional<WriteDiaryActivity> = Optional.empty()){
 //        Log.d("SendFCM", "run")
             dbInstance.reference.child(context.getString(R.string.fdb_diaries)).child(diaryKey)
                     .addListenerForSingleValueEvent(object : ValueEventListener{
