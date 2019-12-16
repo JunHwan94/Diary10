@@ -3,9 +3,11 @@ package com.polarstation.diary10.fragment
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.text.Editable
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
@@ -55,13 +57,12 @@ class PageFragment : Fragment(), View.OnClickListener {
     private val strInstance: () -> FirebaseStorage = { FirebaseStorage.getInstance() }
     private val uid: () -> String = { FirebaseAuth.getInstance().currentUser!!.uid }
     private val adRequest: () -> AdRequest = { AdRequest.Builder().build() }
-    private val getArgument: (String) -> Any = {
-        when(it){
-            IS_COVER_KEY -> arguments!!.getBoolean(it)
-            PAGE_MODEL_KEY -> arguments!!.getParcelable(it)
-            else -> arguments!!.getString(it)
-        }
-    }
+    private val isCover: (Bundle) -> Boolean = { it.getBoolean(IS_COVER_KEY) }
+    private val pageModel: (Bundle) -> PageModel = { it.getParcelable(PAGE_MODEL_KEY)!! }
+    private val diaryKey: (Bundle) -> String = { it.getString(DIARY_KEY_KEY)!! }
+    private val writerUid: (Bundle) -> String = { it.getString(WRITER_UID_KEY)!! }
+    private val imageUrl: (Bundle) -> String = { it.getString(IMAGE_URL_KEY)!! }
+    private val title: (Bundle) -> String = { it.getString(TITLE_KEY)!! }
     private val scaleBigger: () -> Animation = { AnimationUtils.loadAnimation(context, R.anim.spread_left_up) }
     private val scaleSmaller: () -> Animation = { AnimationUtils.loadAnimation(context, R.anim.contract_right_down) }
     private lateinit var callbackOptional: Optional<DiaryFragmentCallback>
@@ -72,7 +73,7 @@ class PageFragment : Fragment(), View.OnClickListener {
 
         isMenuOpened = false
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
-            setView()
+            setUI()
             setMenu()
             loadLikeOrNot()
 
@@ -87,7 +88,7 @@ class PageFragment : Fragment(), View.OnClickListener {
 
     private fun loadLikeOrNot() {
         Log.d("loadLikeOrNot", "called")
-        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(getArgument(DIARY_KEY_KEY) as String)
+        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey(arguments!!))
                 .addListenerForSingleValueEvent(object : ValueEventListener{
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         val diaryModel = dataSnapshot.getValue(DiaryModel::class.java)!!
@@ -101,7 +102,7 @@ class PageFragment : Fragment(), View.OnClickListener {
 
     private fun setMenu() {
         Log.d("setMenu", "called")
-        if(uid() == getArgument(WRITER_UID_KEY)) {
+        if(uid() == writerUid(arguments!!)) {
             binding.pageFragmentMenuButton.visibility = View.VISIBLE
             binding.pageFragmentLikeButton.visibility = View.INVISIBLE
             val listener = object : Animation.AnimationListener{
@@ -119,25 +120,25 @@ class PageFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun setView() {
-        Log.d("setView", "called")
+    private fun setUI() {
+        Log.d("setUI", "called")
         setViewWhenLoading()
         lateinit var imageUrl: String
-        if(getArgument(IS_COVER_KEY) as Boolean){
+        if(isCover(arguments!!)){
             binding.pageFragmentDateTextView.visibility = View.INVISIBLE
             binding.pageFragmentWritePageButton.visibility = View.VISIBLE
             binding.pageFragmentAdView.loadAd(adRequest())
-            imageUrl = getArgument(IMAGE_URL_KEY) as String
+            imageUrl = imageUrl(arguments!!)
 
-            setWriterAndImage(getArgument(WRITER_UID_KEY) as String)
+            setWriterAndImage(writerUid(arguments!!))
             setCoverImageViewSize()
         }else {
-            val pageModel = getArgument(PAGE_MODEL_KEY) as PageModel
+            val pageModel = pageModel(arguments!!)
             val sdf = SimpleDateFormat(getString(R.string.date_format))
             val date = Date(pageModel.createTime)
             imageUrl = pageModel.imageUrl
 
-            binding.pageFragmentContentTextView.apply{ textSize = 22.0f; text = "\n${pageModel.content}" }
+            binding.pageFragmentContentTextView.apply{ textSize = 22.0f; text = Editable.Factory().newEditable(pageModel.content) }
             binding.pageFragmentDateTextView.text = sdf.format(date)
             binding.pageFragmentDeleteDiaryButton.text = getString(R.string.delete_page)
             binding.pageFragmentEditDiaryButton.text = getString(R.string.edit_page)
@@ -170,7 +171,7 @@ class PageFragment : Fragment(), View.OnClickListener {
         windowManager.defaultDisplay.getMetrics(metrics)
         binding.pageFragmentImageView.layoutParams.width = metrics.widthPixels
         binding.pageFragmentImageView.layoutParams.height = metrics.heightPixels
-        binding.pageFragmentLabel.setBackgroundColor(resources.getColor(R.color.trans_white_deep))
+        binding.pageFragmentLabel.setBackgroundColor(resources.getColor(R.color.trans_white_deep, Resources.getSystem().newTheme()))
     }
 
     private fun setWriterAndImage(writerUid: String) {
@@ -179,7 +180,7 @@ class PageFragment : Fragment(), View.OnClickListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         val userModel = dataSnapshot.getValue(UserModel::class.java)!!
                         binding.pageFragmentWriterTextView.text = userModel.userName
-                        binding.pageFragmentContentTextView.text = getArgument(TITLE_KEY) as String
+                        binding.pageFragmentContentTextView.text = title(arguments!!)
                         Glide.with(context)
                                 .load(userModel.profileImageUrl)
                                 .apply(RequestOptions().circleCrop().override(200, 200))
@@ -206,6 +207,7 @@ class PageFragment : Fragment(), View.OnClickListener {
         Log.d("setViewWhenLoading", "called")
         binding.pageFragmentProgressLayout.visibility = View.VISIBLE
         binding.pageFragmentMenuButton.isEnabled = false
+        binding.pageFragmentSlideMenu.cardElevation = 0f
     }
 
     private fun setViewWhenDone() {
@@ -213,6 +215,7 @@ class PageFragment : Fragment(), View.OnClickListener {
         binding.pageFragmentProgressLayout.visibility = View.INVISIBLE
         binding.pageFragmentMenuButton.isEnabled = true
     }
+
 
     override fun onClick(v: View) {
         when(v.id){
@@ -238,10 +241,10 @@ class PageFragment : Fragment(), View.OnClickListener {
             R.id.pageFragment_editDiaryButton, R.id.pageFragment_writePageButton ->
                 startWriteDiaryActivity(v.id)
             R.id.pageFragment_writerTextView ->
-                if(uid() != getArgument(WRITER_UID_KEY)){
+                if(uid() != writerUid(arguments!!)){
                     startActivity(Intent(context, WriterAccountActivity::class.java).apply{
                         flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        putExtra(WRITER_UID_KEY, getArgument(WRITER_UID_KEY) as String)
+                        putExtra(WRITER_UID_KEY, writerUid(arguments!!))
                     })
                 }
             R.id.pageFragment_likeButton -> {
@@ -258,26 +261,26 @@ class PageFragment : Fragment(), View.OnClickListener {
     }
 
     private fun startWriteDiaryActivity(id: Int){
-        callbackOptional.get().activity.startActivityForResult(Intent(context, WriteDiaryActivity::class.java).apply{
+        callbackOptional.get().activity.startActivityForResult(Intent(context, WriteDiaryActivityKt::class.java).apply{
             when(id) {
                 R.id.pageFragment_editDiaryButton -> {
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    putExtra(IS_COVER_KEY, getArgument(IS_COVER_KEY) as Boolean)
-                    putExtra(DIARY_KEY_KEY, getArgument(DIARY_KEY_KEY) as String)
-                    putExtra(TITLE_KEY, getArgument(TITLE_KEY) as String)
-                    if (!(getArgument(IS_COVER_KEY) as Boolean)) {
-                        val pageModel = getArgument(PAGE_MODEL_KEY) as PageModel
+                    putExtra(IS_COVER_KEY, isCover(arguments!!))
+                    putExtra(DIARY_KEY_KEY, diaryKey(arguments!!))
+                    putExtra(TITLE_KEY, title(arguments!!))
+                    if (!isCover(arguments!!)) {
+                        val pageModel = pageModel(arguments!!)
                         putExtra(IMAGE_URL_KEY, pageModel.imageUrl)
                         putExtra(CONTENT_KEY, pageModel.content)
                         putExtra(PAGE_KEY_KEY, pageModel.key)
                         putExtra(PAGE_CREATE_TIME_KEY, pageModel.createTime)
-                    }else putExtra(IMAGE_URL_KEY, getArgument(IMAGE_URL_KEY) as String)
+                    }else putExtra(IMAGE_URL_KEY, imageUrl(arguments!!))
                 }
                 R.id.pageFragment_writePageButton -> {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    putExtra(TITLE_KEY, getArgument(TITLE_KEY) as String)
+                    putExtra(TITLE_KEY, title(arguments!!))
                     putExtra(IS_NEW_KEY, true)
-                    putExtra(DIARY_KEY_KEY, getArgument(DIARY_KEY_KEY) as String)
+                    putExtra(DIARY_KEY_KEY, diaryKey(arguments!!))
                 }
             }
         }, EDIT_DIARY_CODE)
@@ -286,17 +289,17 @@ class PageFragment : Fragment(), View.OnClickListener {
     private fun processLike(like: Boolean) {
         val map = HashMap<String, Any>().apply{ put(uid(), like) }
         if(netStat() == NetworkStatus.TYPE_CONNECTED)
-            dbInstance().reference.child(getString(R.string.fdb_diaries)).child(getArgument(DIARY_KEY_KEY) as String).child(getString(R.string.fdb_like_users)).updateChildren(map)
+            dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey(arguments!!)).child(getString(R.string.fdb_like_users)).updateChildren(map)
         else Toast.makeText(context, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
     }
 
     private fun deleteData() {
         Log.d("deleteData", "called")
-        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(getArgument(DIARY_KEY_KEY) as String)
+        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey(arguments!!))
                 .addListenerForSingleValueEvent(object : ValueEventListener{
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         val diaryModel = dataSnapshot.getValue(DiaryModel::class.java)!!
-                        if(getArgument(IS_COVER_KEY) as Boolean)
+                        if(isCover(arguments!!))
                             deletePictures(diaryModel)
                         else deletePicture(diaryModel)
                     }
@@ -309,9 +312,9 @@ class PageFragment : Fragment(), View.OnClickListener {
         Log.d("deletePicture", "called")
         GlobalScope.launch {
             sequence { yieldAll(diaryModel.pages.values) }
-                    .filter { it.key == (getArgument(PAGE_MODEL_KEY) as PageModel).key }
+                    .filter { it.key == pageModel(arguments!!).key }
                     .forEach {
-                        if((getArgument(PAGE_MODEL_KEY) as PageModel).imageUrl != "")
+                        if(pageModel(arguments!!).imageUrl != "")
                             strInstance().reference.child(getString(R.string.fstr_diary_images)).child(uid()).child(diaryModel.createTime.toString()).child(it.createTime.toString()).delete()
                                     .addOnSuccessListener { deletePageInDatabase() }
                         else deletePageInDatabase()
@@ -321,7 +324,7 @@ class PageFragment : Fragment(), View.OnClickListener {
 
     private fun deletePageInDatabase() {
         Log.d("deletePageInDatabase", "called")
-        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(getArgument(DIARY_KEY_KEY) as String).child(getString(R.string.fdb_pages)).child((getArgument(PAGE_MODEL_KEY) as PageModel).key).removeValue()
+        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey(arguments!!)).child(getString(R.string.fdb_pages)).child(pageModel(arguments!!).key).removeValue()
                 .addOnSuccessListener {
                     binding.pageFragmentProgressBar.visibility = View.INVISIBLE
                     Toast.makeText(context, getString(R.string.delete_success), Toast.LENGTH_SHORT).show()
@@ -333,7 +336,7 @@ class PageFragment : Fragment(), View.OnClickListener {
         Log.d("deletePictures", "called")
         strInstance().reference.child(getString(R.string.fstr_diary_images)).child(uid()).child(diaryModel.createTime.toString()).child(uid()).delete()
                 .addOnSuccessListener {
-                    dbInstance().reference.child(getString(R.string.fdb_diaries)).child(getArgument(DIARY_KEY_KEY) as String).removeValue()
+                    dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey(arguments!!)).removeValue()
                             .addOnSuccessListener {
                                 binding.pageFragmentProgressLayout.visibility = View.INVISIBLE
                                 Toast.makeText(context, getString(R.string.delete_success), Toast.LENGTH_SHORT).show()
@@ -355,8 +358,7 @@ class PageFragment : Fragment(), View.OnClickListener {
 
     override fun onDetach() {
         super.onDetach()
-        if(callbackOptional != Optional.empty<DiaryFragmentCallback>())
-            callbackOptional = Optional.empty()
+        callbackOptional = Optional.empty()
     }
 
     override fun onPause() {

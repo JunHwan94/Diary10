@@ -37,5 +37,5 @@ public class BaseActivity extends AppCompatActivity{
             }
         }
     }
-    // [참고] http://blog.naver.com/PostView.nhn?blogId=hg1286&logNo=220602654734
 }
+// [참고] http://blog.naver.com/PostView.nhn?blogId=hg1286&logNo=220602654734

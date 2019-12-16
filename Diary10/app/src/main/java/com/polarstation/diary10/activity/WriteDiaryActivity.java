@@ -306,7 +306,7 @@ public class WriteDiaryActivity extends BaseActivity implements View.OnClickList
                                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                                 UserModel destinationUserModel = dataSnapshot.getValue(UserModel.class);
                                                 String titleOfDiary = String.valueOf(binding.writeActivityTitleTextView.getText());
-                                                sendRequest(getBaseContext(), destinationUserModel, titleOfDiary, Optional.empty());
+                                                sendRequest(getBaseContext(), destinationUserModel, titleOfDiary, Optional.empty(), Optional.empty());
                                             }
 
                                             @Override

@@ -45,7 +45,7 @@ class ListFragment : Fragment(), View.OnClickListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_list, container, false)
-        Observable.just(binding.root).subscribe{ BaseActivity.setGlobalFont(it) }
+        BaseActivity.setGlobalFont(binding.root)
 
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
             adapter = DiaryRecyclerViewAdapter()
@@ -55,7 +55,7 @@ class ListFragment : Fragment(), View.OnClickListener {
 
             loadDiaries()
             Observable.just(binding.listFragmentRefreshButton, binding.listFragmentSearchButton)
-                    .subscribe{it.setOnClickListener(this)}
+                    .subscribe{it.setOnClickListener(this)}.dispose()
 
             TedKeyboardObserver(activity!!).listen(object : BaseKeyboardObserver.OnKeyboardListener{
                 override fun onKeyboardChange(isShow: Boolean) {
@@ -89,8 +89,8 @@ class ListFragment : Fragment(), View.OnClickListener {
                             adapter.clear()
                             GlobalScope.launch {
                                 sequence { yieldAll(dataSnapshot.children) }
-                                        .filter { it.getValue(DiaryModel::class.java)!!.uid != uid() }
                                         .map { it.getValue(DiaryModel::class.java)!! }
+                                        .filter { it.uid != uid() }
                                         .forEach {
                                             adapter.addItem(it)
                                             callbackOptional.get().notifyAdapter(adapter)

@@ -80,7 +80,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
 
             val viewList = listOf(binding.accountFragmentProfileImageView, binding.accountFragmentEditButton, binding.accountFragmentMenuButton, binding.accountFragmentSignOutButton,
                     binding.accountFragmentLicenseGuideButton, binding.accountFragmentRootLayout)
-            Observable.fromIterable(viewList).subscribe{ it.setOnClickListener(this) }
+            Observable.fromIterable(viewList).subscribe{ it.setOnClickListener(this) }.dispose()
 
             setDiariesFragment()
             setButtonAnimation()
@@ -235,7 +235,6 @@ class AccountFragment : Fragment(), View.OnClickListener {
 
     override fun onDetach() {
         super.onDetach()
-        if(callbackOptional != Optional.empty<MainFragmentCallBack>())
-            callbackOptional = Optional.empty()
+        callbackOptional = Optional.empty()
     }
 }

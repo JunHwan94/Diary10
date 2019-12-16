@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity(), MainFragmentCallBack {
         }
     }
 
-    override fun findMyDiary() {
+    private fun findMyDiary() {
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
             dbInstance().reference.child(getString(R.string.fdb_diaries)).orderByChild(getString(R.string.fdb_uid)).equalTo(uid())
                     .addValueEventListener(object : ValueEventListener{

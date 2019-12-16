@@ -109,7 +109,6 @@ class DiariesFragmentKt : Fragment() {
 
                                 binding.diariesFragmentProgressBar.visibility = View.INVISIBLE
                             }
-
                         }
 
                         override fun onCancelled(p0: DatabaseError) {}

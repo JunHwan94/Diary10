@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -27,7 +26,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.HashMap
 
-class EditAccountActivity : AppCompatActivity(), View.OnClickListener {
+class EditAccountActivity : BaseActivity(), View.OnClickListener {
     private lateinit var binding: ActivityEditAccountBinding
     private val strInstance: () -> FirebaseStorage = { FirebaseStorage.getInstance() }
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
@@ -53,7 +52,7 @@ class EditAccountActivity : AppCompatActivity(), View.OnClickListener {
         binding.editAccountActivityCommentEditText.setText(comment)
 
         val clickableViewList = listOf(binding.editAccountActivityProfileImageView, binding.editAccountActivityCloseButton, binding.editAccountActivitySaveButton)
-        Observable.fromIterable(clickableViewList).subscribe { it.setOnClickListener(this) }
+        Observable.fromIterable(clickableViewList).subscribe { it.setOnClickListener(this) }.dispose()
         TedKeyboardObserver(this).listen(object : BaseKeyboardObserver.OnKeyboardListener{
             override fun onKeyboardChange(isShow: Boolean) {
                 when{
