@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
@@ -18,11 +19,12 @@ import com.polarstation.diary10.databinding.ActivityWriterAccountBinding
 import com.polarstation.diary10.fragment.*
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.model.UserModel
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-class WriterAccountActivity : BaseActivity(), View.OnClickListener {
+class WriterAccountActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var binding: ActivityWriterAccountBinding
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
     private val netStat: () -> Int = { NetworkStatus.getConnectivityStatus(this) }
@@ -33,6 +35,7 @@ class WriterAccountActivity : BaseActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_writer_account)
+        FontUtil.setGlobalFont(binding.root)
         if(netStat() == NetworkStatus.TYPE_CONNECTED)
             if(intent != null){
                 binding.writerAccountActivityProgressBar.visibility = View.VISIBLE
@@ -43,15 +46,18 @@ class WriterAccountActivity : BaseActivity(), View.OnClickListener {
 
         val layoutManager = GridLayoutManager(baseContext, 3)
         binding.writerAccountActivityRecyclerView.layoutManager = layoutManager
-        adapter = DiaryRecyclerViewAdapter().apply { setOnItemClickListener { _, _, position->
-            val diaryModel = adapter.getItem(position)
-            startActivity(Intent(this@WriterAccountActivity, DiaryActivity::class.java).apply {
-                putExtra(TITLE_KEY, diaryModel.title)
-                putExtra(WRITER_UID_KEY, diaryModel.uid)
-                putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
-                putExtra(DIARY_KEY_KEY, diaryModel.key)
-            })
-        } }
+        adapter = DiaryRecyclerViewAdapter()
+        adapter.setOnItemClickListener(object : DiaryRecyclerViewAdapter.OnItemClickListener{
+            override fun onItemClick(holder: DiaryRecyclerViewAdapter.DiaryViewHolder, view: View, position: Int) {
+                val diaryModel = adapter.getItem(position)
+                startActivity(Intent(this@WriterAccountActivity, DiaryActivity::class.java).apply {
+                    putExtra(TITLE_KEY, diaryModel.title)
+                    putExtra(WRITER_UID_KEY, diaryModel.uid)
+                    putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
+                    putExtra(DIARY_KEY_KEY, diaryModel.key)
+                })
+            }
+        })
         binding.writerAccountActivityRecyclerView.adapter = adapter
     }
 

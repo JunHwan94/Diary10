@@ -28,8 +28,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.polarstation.diary10.R
-import com.polarstation.diary10.activity.BaseActivity
 import com.polarstation.diary10.activity.EditAccountActivity
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.activity.PUSH_TOKEN
 import com.polarstation.diary10.activity.PhotoViewActivity
 import com.polarstation.diary10.databinding.FragmentAccountBinding
@@ -63,7 +63,7 @@ class AccountFragment : Fragment(), View.OnClickListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_account, container, false)
-        BaseActivity.setGlobalFont(binding.root)
+        FontUtil.setGlobalFont(binding.root)
 
         isMenuOpened = false
         if(netStat() == NetworkStatus.TYPE_CONNECTED){

@@ -8,6 +8,7 @@ import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.facebook.*
@@ -27,10 +28,11 @@ import com.google.firebase.database.ValueEventListener
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityLoginBinding
 import com.polarstation.diary10.model.UserModel
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import java.security.MessageDigest
 
-class LoginActivity : BaseActivity(), View.OnClickListener {
+class LoginActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var binding : ActivityLoginBinding
     private val authInstance : () -> FirebaseAuth = { FirebaseAuth.getInstance () }
     private lateinit var authStateListener : FirebaseAuth.AuthStateListener
@@ -45,6 +47,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_login)
+        FontUtil.setGlobalFont(binding.root)
 
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
             FirebaseApp.initializeApp(this)

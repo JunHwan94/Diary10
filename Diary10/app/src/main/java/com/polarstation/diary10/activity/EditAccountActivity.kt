@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -17,6 +18,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivityEditAccountBinding
 import com.polarstation.diary10.fragment.*
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
@@ -26,7 +28,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.HashMap
 
-class EditAccountActivity : BaseActivity(), View.OnClickListener {
+class EditAccountActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var binding: ActivityEditAccountBinding
     private val strInstance: () -> FirebaseStorage = { FirebaseStorage.getInstance() }
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
@@ -39,6 +41,7 @@ class EditAccountActivity : BaseActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_edit_account)
+        FontUtil.setGlobalFont(binding.root)
 
         val accountImageUrl = intent!!.getStringExtra(URL_KEY)
         val name = intent!!.getStringExtra(NAME_KEY)

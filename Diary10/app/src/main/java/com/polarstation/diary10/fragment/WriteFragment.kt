@@ -34,6 +34,7 @@ import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.model.NotificationModel
 import com.polarstation.diary10.model.PageModel
 import com.polarstation.diary10.model.UserModel
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
@@ -67,7 +68,7 @@ class WriteFragment : Fragment(), View.OnClickListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_write, container, false)
-        BaseActivity.setGlobalFont(binding.root)
+        FontUtil.setGlobalFont(binding.root)
 
         isImageChanged = false
         if(netStat() == NetworkStatus.TYPE_CONNECTED){

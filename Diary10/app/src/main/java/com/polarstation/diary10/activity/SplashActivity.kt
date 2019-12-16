@@ -4,20 +4,24 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.polarstation.diary10.R
 import com.polarstation.diary10.databinding.ActivitySplashBinding
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SplashActivity : BaseActivity() {
+class SplashActivity : AppCompatActivity() {
     lateinit var binding : ActivitySplashBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_splash)
+        FontUtil.setGlobalFont(binding.root)
+
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
         val intent = Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP }

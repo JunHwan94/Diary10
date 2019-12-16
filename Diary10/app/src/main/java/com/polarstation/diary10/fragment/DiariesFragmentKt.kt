@@ -44,16 +44,18 @@ class DiariesFragmentKt : Fragment() {
         val layoutManager = GridLayoutManager(context, 3)
         binding.diariesFragmentRecyclerView.layoutManager = layoutManager
         adapter = DiaryRecyclerViewAdapter()
-        adapter.setOnItemClickListener { _, _, position->
-            val diaryModel = adapter.getItem(position)
-            startActivityForResult(Intent(context, DiaryActivity::class.java).apply{
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(TITLE_KEY, diaryModel.title)
-                putExtra(WRITER_UID_KEY, diaryModel.uid)
-                putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
-                putExtra(DIARY_KEY_KEY, diaryModel.key)
-            }, SHOW_DIARY_CODE)
-        }
+        adapter.setOnItemClickListener(object : DiaryRecyclerViewAdapter.OnItemClickListener{
+            override fun onItemClick(holder: DiaryRecyclerViewAdapter.DiaryViewHolder, view: View, position: Int) {
+                val diaryModel = adapter.getItem(position)
+                startActivityForResult(Intent(context, DiaryActivity::class.java).apply{
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    putExtra(TITLE_KEY, diaryModel.title)
+                    putExtra(WRITER_UID_KEY, diaryModel.uid)
+                    putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
+                    putExtra(DIARY_KEY_KEY, diaryModel.key)
+                }, SHOW_DIARY_CODE)
+            }
+        })
         binding.diariesFragmentRecyclerView.adapter = adapter
 
         return binding.root
@@ -106,7 +108,6 @@ class DiariesFragmentKt : Fragment() {
                                             adapter.addItem(it.getValue(DiaryModel::class.java)!!)
                                             callbackOptional.get().notifyAdapter(adapter)
                                         }
-
                                 binding.diariesFragmentProgressBar.visibility = View.INVISIBLE
                             }
                         }

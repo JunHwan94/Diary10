@@ -38,6 +38,7 @@ import com.polarstation.diary10.databinding.FragmentPageBinding
 import com.polarstation.diary10.model.DiaryModel
 import com.polarstation.diary10.model.PageModel
 import com.polarstation.diary10.model.UserModel
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import io.reactivex.Observable
 import kotlinx.coroutines.GlobalScope
@@ -69,7 +70,7 @@ class PageFragment : Fragment(), View.OnClickListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_page, container, false)
-        BaseActivity.setGlobalFont(binding.root)
+        FontUtil.setGlobalFont(binding.root)
 
         isMenuOpened = false
         if(netStat() == NetworkStatus.TYPE_CONNECTED){

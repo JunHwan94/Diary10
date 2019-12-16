@@ -11,6 +11,7 @@ import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -25,6 +26,7 @@ import com.polarstation.diary10.databinding.ActivityWriteDiaryBinding
 import com.polarstation.diary10.fragment.*
 import com.polarstation.diary10.fragment.WriteFragment.Companion.pushPage
 import com.polarstation.diary10.model.DiaryModel
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.util.NetworkStatus
 import gun0912.tedkeyboardobserver.BaseKeyboardObserver
 import gun0912.tedkeyboardobserver.TedKeyboardObserver
@@ -32,7 +34,7 @@ import io.reactivex.Observable
 import java.util.*
 import kotlin.collections.HashMap
 
-class WriteDiaryActivity : BaseActivity(), View.OnClickListener {
+class WriteDiaryActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var binding: ActivityWriteDiaryBinding
     private val strInstance: () -> FirebaseStorage = { FirebaseStorage.getInstance() }
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
@@ -50,6 +52,7 @@ class WriteDiaryActivity : BaseActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_write_diary)
+        FontUtil.setGlobalFont(binding.root)
 
         if(intent != null)
             setUI()

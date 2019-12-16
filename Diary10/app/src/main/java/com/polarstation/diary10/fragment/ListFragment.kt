@@ -16,8 +16,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.polarstation.diary10.R
-import com.polarstation.diary10.activity.BaseActivity
 import com.polarstation.diary10.activity.DiaryActivity
+import com.polarstation.diary10.util.FontUtil
 import com.polarstation.diary10.data.DiaryRecyclerViewAdapter
 import com.polarstation.diary10.databinding.FragmentListBinding
 import com.polarstation.diary10.model.DiaryModel
@@ -45,7 +45,7 @@ class ListFragment : Fragment(), View.OnClickListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_list, container, false)
-        BaseActivity.setGlobalFont(binding.root)
+        FontUtil.setGlobalFont(binding.root)
 
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
             adapter = DiaryRecyclerViewAdapter()
@@ -68,16 +68,19 @@ class ListFragment : Fragment(), View.OnClickListener {
     }
 
     private fun setAdapterListener(adapter: DiaryRecyclerViewAdapter){
-        adapter.setOnItemClickListener{ _, _, position ->
-            val diaryModel = adapter.getItem(position)
-            val intent = Intent(context, DiaryActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(DIARY_KEY_KEY, diaryModel.key)
-                putExtra(TITLE_KEY, diaryModel.title)
-                putExtra(WRITER_UID_KEY, diaryModel.uid)
-                putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
+        adapter.setOnItemClickListener(object : DiaryRecyclerViewAdapter.OnItemClickListener {
+            override fun onItemClick(holder: DiaryRecyclerViewAdapter.DiaryViewHolder, view: View, position: Int) {
+                val diaryModel = adapter.getItem(position)
+                val intent = Intent(context, DiaryActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    putExtra(DIARY_KEY_KEY, diaryModel.key)
+                    putExtra(TITLE_KEY, diaryModel.title)
+                    putExtra(WRITER_UID_KEY, diaryModel.uid)
+                    putExtra(IMAGE_URL_KEY, diaryModel.coverImageUrl)
+                }
+                startActivity(intent)
             }
-            startActivity(intent)
-        }
+        })
     }
 
     private fun loadDiaries() {
@@ -96,7 +99,6 @@ class ListFragment : Fragment(), View.OnClickListener {
                                             callbackOptional.get().notifyAdapter(adapter)
                                         }
                             }
-
                             binding.listFragmentProgressBar.visibility = View.INVISIBLE
                         }
 
@@ -116,7 +118,7 @@ class ListFragment : Fragment(), View.OnClickListener {
                             else GlobalScope.launch{
                                     sequence{ yieldAll(dataSnapshot.children) }
                                             .filter{ it.getValue(DiaryModel::class.java)!!.title.contains(searchWord) }
-                                            .map{ it.getValue(DiaryModel::class.java) }
+                                            .map{ it.getValue(DiaryModel::class.java)!! }
                                             .forEach {
                                                 adapter.addItem(it)
                                                 callbackOptional.get().notifyAdapter(adapter)
