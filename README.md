@@ -16,14 +16,12 @@
 > RxJava, Coroutines
 >#### 뷰  
 >Glide, CardView, RecyclerView, chrisbanes:PhotoView, tedKeyboardObserver  
->#### 통신, 데이터 처리  
->okHttp, Gson  
 >#### 데이터베이스  
 >FirebaseDatabase, FirebaseStorage  
 >#### 로그인, 인증  
 >FirebaseAuth, facebook-sdk, play-services-auth  
 >#### 푸시알림  
->FirebaseMessaging  
+>FirebaseMessaging, okHttp, Gson  
 >#### 배너 광고  
 >play-services-ads  
 >#### RecyclerViewAdpater, NetworkStatus 코드  
