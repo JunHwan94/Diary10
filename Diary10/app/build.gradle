@@ -58,7 +58,6 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation 'com.squareup.okhttp3:okhttp:3.9.1'
     implementation 'com.google.android.gms:play-services-ads:18.2.0'
-    implementation 'commons-io:commons-io:2.6'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.7'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
     implementation "androidx.core:core-ktx:1.0.1"

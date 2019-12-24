@@ -75,6 +75,8 @@ class WriteDiaryActivity : AppCompatActivity(), View.OnClickListener {
                 binding.writeActivityGuideTextView.visibility = View.VISIBLE
             }
             isCover(intent) -> {
+                Log.d("커버?", "${isCover(intent)}")
+                loadPrivateOrNot()
                 binding.writeActivityTitleTextView.visibility = View.INVISIBLE
                 binding.writeActivityEditText2.visibility = View.INVISIBLE
                 binding.writeActivitySwitch.visibility = View.VISIBLE
@@ -104,6 +106,20 @@ class WriteDiaryActivity : AppCompatActivity(), View.OnClickListener {
                 .apply(RequestOptions().centerCrop())
                 .into(binding.writeActivityCoverImageView)
         binding.writeActivityCoverImageView.visibility = View.VISIBLE
+    }
+
+    private fun loadPrivateOrNot(){
+        dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey(intent))
+                .addListenerForSingleValueEvent(object : ValueEventListener{
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        Log.d("private?", "${dataSnapshot.getValue(DiaryModel::class.java)!!.private}")
+                        binding.writeActivitySwitch.isChecked = dataSnapshot.getValue(DiaryModel::class.java)!!.private
+                    }
+
+                    override fun onCancelled(p0: DatabaseError) {
+
+                    }
+                })
     }
 
     override fun onClick(v: View) {
@@ -138,6 +154,10 @@ class WriteDiaryActivity : AppCompatActivity(), View.OnClickListener {
                                 isCover(intent) -> putCoverImageFile(text, diaryCreateTime.toString())
                                 else -> updatePageImageFile(text, diaryCreateTime.toString())
                             }
+                        else{
+                            setViewWhenUploading()
+                            updateDatabase(text)
+                        }
                     }
 
                     override fun onCancelled(p0: DatabaseError) {}
@@ -145,6 +165,7 @@ class WriteDiaryActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun updatePageImageFile(content: String, diaryCreateTime: String){
+        setViewWhenUploading()
         strInstance().reference.child(getString(R.string.fstr_diary_images)).child(uid()).child(diaryCreateTime).child(pageCreateTime.toString()).putFile(imageUri)
                 .addOnSuccessListener {
                     strInstance().reference.child(getString(R.string.fstr_diary_images)).child(uid()).child(diaryCreateTime).child(pageCreateTime.toString()).downloadUrl
@@ -182,6 +203,7 @@ class WriteDiaryActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun putCoverImageFile(text: String, diaryCreateTime: String){
+        setViewWhenUploading()
         strInstance().reference.child(getString(R.string.fstr_diary_images)).child(uid()).child(diaryCreateTime).child(uid()).putFile(imageUri)
                 .addOnSuccessListener {
                     strInstance().reference.child(getString(R.string.fstr_diary_images)).child(uid()).child(diaryCreateTime).child(uid()).downloadUrl
