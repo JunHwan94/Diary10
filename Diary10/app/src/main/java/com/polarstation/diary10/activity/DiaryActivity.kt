@@ -3,6 +3,7 @@ package com.polarstation.diary10.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -34,7 +35,7 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
     private val writerUid: () -> String = { intent.getStringExtra(WRITER_UID_KEY) }
     private val diaryKey: () -> String = { intent.getStringExtra(DIARY_KEY_KEY) }
     private val dbInstance: () -> FirebaseDatabase = { FirebaseDatabase.getInstance() }
-    private lateinit var pagerAdapter: ListPagerAdapter
+//    private lateinit var pagerAdapter: ListPagerAdapter
     private val netStat: () -> Int = { NetworkStatus.getConnectivityStatus(this) }
     private var isDataChanged = false
 
@@ -43,17 +44,17 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_diary)
 
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
-            pagerAdapter = ListPagerAdapter(supportFragmentManager)
+            val pagerAdapter = ListPagerAdapter(supportFragmentManager)
             binding.diaryActivityViewPager.apply { offscreenPageLimit = 2; adapter = pagerAdapter }
-            loadDiaryCover()
-            loadDiary(diaryKey())
+            loadDiaryCover(pagerAdapter)
+            loadDiary(diaryKey(), pagerAdapter)
         }else {
             Toast.makeText(baseContext, getString(R.string.network_not_connected), Toast.LENGTH_SHORT).show()
             finish()
         }
     }
 
-    override fun loadDiary(key: String?) {
+    override fun loadDiary(key: String?, pagerAdapter: ListPagerAdapter) {
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
             setViewWhenLoading()
             dbInstance().reference.child(getString(R.string.fdb_diaries)).child(key!!).child(getString(R.string.fdb_pages)).orderByChild(getString(R.string.fdb_createTime))
@@ -64,6 +65,7 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
                                     .forEach{
                                         pagerAdapter.addItem(PageFragment.newInstance(title = title(), writerUid = writerUid(),
                                                 diaryKey = diaryKey(), pageModelOp = Optional.of(it)))
+//                                        runOnUiThread { pagerAdapter.notifyDataSetChanged() }
                                     }
                             setViewWhenDone()
                         }
@@ -87,7 +89,7 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
 
     override fun getActivity(): Activity = this
 
-    override fun dataChanges() { isDataChanged = !isDataChanged }
+    override fun dataChanges() { isDataChanged = true }
 
     override fun onBackPressed() {
         if(isDataChanged){
@@ -100,14 +102,18 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == EDIT_DIARY_CODE && resultCode == Activity.RESULT_OK){
-            dataChanges()
-            pagerAdapter.clear()
-            loadDiaryCover()
-            loadDiary(diaryKey())
+            Log.d("ActivityResult", "OK")
+//            dataChanges()
+            isDataChanged = true
+//            pagerAdapter.clear()
+            val pagerAdapter = ListPagerAdapter(supportFragmentManager)
+            binding.diaryActivityViewPager.adapter = pagerAdapter
+            loadDiaryCover(pagerAdapter)
+            loadDiary(diaryKey(), pagerAdapter)
         }
     }
 
-    private fun loadDiaryCover(){
+    private fun loadDiaryCover(pagerAdapter: ListPagerAdapter){
         if(netStat() == NetworkStatus.TYPE_CONNECTED){
             setViewWhenLoading()
             dbInstance().reference.child(getString(R.string.fdb_diaries)).child(diaryKey())
@@ -116,7 +122,6 @@ class DiaryActivity : AppCompatActivity(), DiaryFragmentCallback {
                             val diaryModel = dataSnapshot.getValue(DiaryModel::class.java)!!
                             pagerAdapter.addItem(PageFragment.newInstance(isCover = isCover, title = diaryModel.title,
                                     writerUid = diaryModel.uid, coverImageUrl = diaryModel.coverImageUrl, diaryKey = diaryModel.key))
-
                             setViewWhenDone()
                         }
 
